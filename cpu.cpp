@@ -387,7 +387,7 @@ std::ostream& operator<<( std::ostream& ostr, const Instruction& instr )
     switch ( def.addressing )
     {
     case InstructionDefinition::ADDRESSING_IMMEDIATE:
-        ostr << "\timm";
+        ostr << "\t$" << std::setfill('0') << std::setw(2) << (instr.operand1+0);
         break;
     case InstructionDefinition::ADDRESSING_ZERO_PAGE:
         ostr << "\tzero_page";
@@ -423,4 +423,44 @@ std::ostream& operator<<( std::ostream& ostr, const Instruction& instr )
         break;
     }
     return ostr;
+}
+
+uint8_t CPU::resolveAddressing( const Instruction& instr )
+{
+    InstructionDefinition def = InstructionDefinition::table()[ instr.opcode ];
+
+    switch ( def.addressing )
+    {
+    case InstructionDefinition::ADDRESSING_IMMEDIATE:
+        return instr.operand1;
+        break;
+    case InstructionDefinition::ADDRESSING_ZERO_PAGE:
+        return memory[ instr.operand1 ];
+        break;
+    }
+}
+
+void CPU::transfer( uint8_t* target, uint8_t src )
+{
+    *target = src;
+}
+
+void CPU::execute( const Instruction& instr )
+{
+    InstructionDefinition def = InstructionDefinition::table()[ instr.opcode ];
+
+    if ( def.mnemonic == "JMP" ) {
+        uint16_t adr = (instr.operand2 << 8) + instr.operand1;
+        pc = adr;
+    }
+    else if ( def.mnemonic == "LDX" ) {
+        uint8_t src = resolveAddressing( instr );
+        uint8_t *target = &regX;
+        transfer( target, src );
+    }
+    else if ( def.mnemonic == "STX" ) {
+        uint8_t *target = memory + resolveAddressing( instr );
+        uint8_t src = regX;
+        transfer( target, src );
+    }
 }

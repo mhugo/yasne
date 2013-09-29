@@ -77,3 +77,20 @@ struct Instruction
 };
 
 std::ostream& operator<<( std::ostream& ostr, const Instruction& instr );
+
+struct CPU
+{
+    uint8_t regA, regX, regY;
+    uint8_t status;
+    // stack pointer;
+    uint8_t sp;
+
+    // pc
+    uint16_t pc;
+
+    uint8_t *memory;
+
+    void execute( const Instruction& instr );
+    void transfer( uint8_t* target, uint8_t src);
+    uint8_t resolveAddressing( const Instruction& instr );
+};
