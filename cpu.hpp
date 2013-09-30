@@ -9,7 +9,66 @@ struct InstructionDefinition
     uint8_t opcode;
 
     // mnemonic
-    std::string mnemonic;
+    enum Mnemonic
+    {
+        MNEMONIC_PHP,
+        MNEMONIC_CLC,
+        MNEMONIC_PLP,
+        MNEMONIC_SEC,
+        MNEMONIC_PHA,
+        MNEMONIC_CLI,
+        MNEMONIC_PLA,
+        MNEMONIC_SEI,
+        MNEMONIC_DEY,
+        MNEMONIC_TYA,
+        MNEMONIC_TAY,
+        MNEMONIC_CLV,
+        MNEMONIC_INY,
+        MNEMONIC_CLD,
+        MNEMONIC_INX,
+        MNEMONIC_SED,
+        MNEMONIC_TXA,
+        MNEMONIC_TXS,
+        MNEMONIC_TAX,
+        MNEMONIC_TSX,
+        MNEMONIC_DEX,
+        MNEMONIC_NOP,
+        MNEMONIC_BRK,
+        MNEMONIC_BPL,
+        MNEMONIC_JSR,
+        MNEMONIC_BMI,
+        MNEMONIC_RTI,
+        MNEMONIC_BVC,
+        MNEMONIC_RTS,
+        MNEMONIC_BVS,
+        MNEMONIC_BCC,
+        MNEMONIC_BCS,
+        MNEMONIC_BNE,
+        MNEMONIC_BEQ,
+        MNEMONIC_ORA,
+        MNEMONIC_AND,
+        MNEMONIC_EOR,
+        MNEMONIC_ADC,
+        MNEMONIC_STA,
+        MNEMONIC_LDA,
+        MNEMONIC_CMP,
+        MNEMONIC_SBC,
+        MNEMONIC_ASL,
+        MNEMONIC_ROL,
+        MNEMONIC_LSR,
+        MNEMONIC_ROR,
+        MNEMONIC_STX,
+        MNEMONIC_LDX,
+        MNEMONIC_DEC,
+        MNEMONIC_INC,
+        MNEMONIC_BIT,
+        MNEMONIC_JMP,
+        MNEMONIC_STY,
+        MNEMONIC_LDY,
+        MNEMONIC_CPY,
+        MNEMONIC_CPX
+    };
+    Mnemonic mnemonic;
 
     // addressing mode
     enum Addressing
@@ -49,7 +108,7 @@ struct InstructionDefinition
     InstructionDefinition() : valid( false ) {}
 
     InstructionDefinition( uint8_t opcode,
-                           std::string mnemo,
+                           Mnemonic mnemo,
                            Addressing addressing,
                            int nOperands ) :
         opcode(opcode),

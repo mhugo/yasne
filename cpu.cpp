@@ -22,70 +22,70 @@ void InstructionDefinition::initTable()
         switch (i)
         {
         case 0x08:
-            table[i].mnemonic = "PHP";
+            table[i].mnemonic = MNEMONIC_PHP;
             break;
         case 0x18:
-            table[i].mnemonic = "CLC";
+            table[i].mnemonic = MNEMONIC_CLC;
             break;
         case 0x28:
-            table[i].mnemonic = "PLP";
+            table[i].mnemonic = MNEMONIC_PLP;
             break;
         case 0x38:
-            table[i].mnemonic = "SEC";
+            table[i].mnemonic = MNEMONIC_SEC;
             break;
         case 0x48:
-            table[i].mnemonic = "PHA";
+            table[i].mnemonic = MNEMONIC_PHA;
             break;
         case 0x58:
-            table[i].mnemonic = "CLI";
+            table[i].mnemonic = MNEMONIC_CLI;
             break;
         case 0x68:
-            table[i].mnemonic = "PLA";
+            table[i].mnemonic = MNEMONIC_PLA;
             break;
         case 0x78:
-            table[i].mnemonic = "SEI";
+            table[i].mnemonic = MNEMONIC_SEI;
             break;
         case 0x88:
-            table[i].mnemonic = "DEY";
+            table[i].mnemonic = MNEMONIC_DEY;
             break;
         case 0x98:
-            table[i].mnemonic = "TYA";
+            table[i].mnemonic = MNEMONIC_TYA;
             break;
         case 0xA8:
-            table[i].mnemonic = "TAY";
+            table[i].mnemonic = MNEMONIC_TAY;
             break;
         case 0xB8:
-            table[i].mnemonic = "CLV";
+            table[i].mnemonic = MNEMONIC_CLV;
             break;
         case 0xC8:
-            table[i].mnemonic = "INY";
+            table[i].mnemonic = MNEMONIC_INY;
             break;
         case 0xD8:
-            table[i].mnemonic = "CLD";
+            table[i].mnemonic = MNEMONIC_CLD;
             break;
         case 0xE8:
-            table[i].mnemonic = "INX";
+            table[i].mnemonic = MNEMONIC_INX;
             break;
         case 0xF8:
-            table[i].mnemonic = "SED";
+            table[i].mnemonic = MNEMONIC_SED;
             break;
         case 0x8A:
-            table[i].mnemonic = "TXA";
+            table[i].mnemonic = MNEMONIC_TXA;
             break;
         case 0x9A:
-            table[i].mnemonic = "TXS";
+            table[i].mnemonic = MNEMONIC_TXS;
             break;
         case 0xAA:
-            table[i].mnemonic = "TAX";
+            table[i].mnemonic = MNEMONIC_TAX;
             break;
         case 0xBA:
-            table[i].mnemonic = "TSX";
+            table[i].mnemonic = MNEMONIC_TSX;
             break;
         case 0xCA:
-            table[i].mnemonic = "DEX";
+            table[i].mnemonic = MNEMONIC_DEX;
             break;
         case 0xEA:
-            table[i].mnemonic = "NOP";
+            table[i].mnemonic = MNEMONIC_NOP;
             break;
         default:
             table[i].valid = false;
@@ -98,46 +98,46 @@ void InstructionDefinition::initTable()
             table[i].addressing = ADDRESSING_RELATIVE;
             switch (xx) {
             case 0:
-                table[i].mnemonic = "BRK";
+                table[i].mnemonic = MNEMONIC_BRK;
                 table[i].addressing = ADDRESSING_NONE;
                 break;
             case 1:
-                table[i].mnemonic = "BPL";
+                table[i].mnemonic = MNEMONIC_BPL;
                 break;
             case 2:
                 // JSR abs
-                table[i].mnemonic = "JSR";
+                table[i].mnemonic = MNEMONIC_JSR;
                 table[i].addressing = ADDRESSING_ABSOLUTE;
                 break;
             case 3:
                 // JMP abs
-                table[i].mnemonic = "BMI";
+                table[i].mnemonic = MNEMONIC_BMI;
                 break;
             case 4:
-                table[i].mnemonic = "RTI";
+                table[i].mnemonic = MNEMONIC_RTI;
                 table[i].addressing = ADDRESSING_NONE;
                 break;
             case 5:
-                table[i].mnemonic = "BVC";
+                table[i].mnemonic = MNEMONIC_BVC;
                 break;
             case 6:
-                table[i].mnemonic = "RTS";
+                table[i].mnemonic = MNEMONIC_RTS;
                 table[i].addressing = ADDRESSING_NONE;
                 break;
             case 7:
-                table[i].mnemonic = "BVS";
+                table[i].mnemonic = MNEMONIC_BVS;
                 break;
             case 9:
-                table[i].mnemonic = "BCC";
+                table[i].mnemonic = MNEMONIC_BCC;
                 break;
             case 0xb:
-                table[i].mnemonic = "BCS";
+                table[i].mnemonic = MNEMONIC_BCS;
                 break;
             case 0xd:
-                table[i].mnemonic = "BNE";
+                table[i].mnemonic = MNEMONIC_BNE;
                 break;
             case 0xf:
-                table[i].mnemonic = "BEQ";
+                table[i].mnemonic = MNEMONIC_BEQ;
                 break;
             default:
                 table[i].valid = false;
@@ -147,28 +147,28 @@ void InstructionDefinition::initTable()
             table[i].valid = true;
             switch (aaa) {
             case 0:
-                table[i].mnemonic = "ORA";
+                table[i].mnemonic = MNEMONIC_ORA;
                 break;
             case 1:
-                table[i].mnemonic = "AND";
+                table[i].mnemonic = MNEMONIC_AND;
                 break;
             case 2:
-                table[i].mnemonic = "EOR";
+                table[i].mnemonic = MNEMONIC_EOR;
                 break;
             case 3:
-                table[i].mnemonic = "ADC";
+                table[i].mnemonic = MNEMONIC_ADC;
                 break;
             case 4:
-                table[i].mnemonic = "STA";
+                table[i].mnemonic = MNEMONIC_STA;
                 break;
             case 5:
-                table[i].mnemonic = "LDA";
+                table[i].mnemonic = MNEMONIC_LDA;
                 break;
             case 6:
-                table[i].mnemonic = "CMP";
+                table[i].mnemonic = MNEMONIC_CMP;
                 break;
             case 7:
-                table[i].mnemonic = "SBC";
+                table[i].mnemonic = MNEMONIC_SBC;
                 break;
             }
 
@@ -205,28 +205,28 @@ void InstructionDefinition::initTable()
             table[i].valid = true;
             switch (aaa) {
             case 0:
-                table[i].mnemonic = "ASL";
+                table[i].mnemonic = MNEMONIC_ASL;
                 break;
             case 1:
-                table[i].mnemonic = "ROL";
+                table[i].mnemonic = MNEMONIC_ROL;
                 break;
             case 2:
-                table[i].mnemonic = "LSR";
+                table[i].mnemonic = MNEMONIC_LSR;
                 break;
             case 3:
-                table[i].mnemonic = "ROR";
+                table[i].mnemonic = MNEMONIC_ROR;
                 break;
             case 4:
-                table[i].mnemonic = "STX";
+                table[i].mnemonic = MNEMONIC_STX;
                 break;
             case 5:
-                table[i].mnemonic = "LDX";
+                table[i].mnemonic = MNEMONIC_LDX;
                 break;
             case 6:
-                table[i].mnemonic = "DEC";
+                table[i].mnemonic = MNEMONIC_DEC;
                 break;
             case 7:
-                table[i].mnemonic = "INC";
+                table[i].mnemonic = MNEMONIC_INC;
                 break;
             }
             Addressing adr;
@@ -244,7 +244,7 @@ void InstructionDefinition::initTable()
                 adr = ADDRESSING_ABSOLUTE;
                 break;
             case 5:
-                if ( table[i].mnemonic == "STX" ) {
+                if ( table[i].mnemonic == MNEMONIC_STX ) {
                     adr = ADDRESSING_ZERO_PAGE_Y;
                 }
                 else {
@@ -252,7 +252,7 @@ void InstructionDefinition::initTable()
                 }
                 break;
             case 7:
-                if ( table[i].mnemonic == "LDX" ) {
+                if ( table[i].mnemonic == MNEMONIC_LDX ) {
                     adr = ADDRESSING_ABSOLUTE_Y;
                 }
                 else {
@@ -272,26 +272,26 @@ void InstructionDefinition::initTable()
                 table[i].valid = false;
                 break;
             case 1:
-                table[i].mnemonic = "BIT";
+                table[i].mnemonic = MNEMONIC_BIT;
                 break;
             case 2:
-                table[i].mnemonic = "JMP";
+                table[i].mnemonic = MNEMONIC_JMP;
                 break;
             case 3:
                 // JMP abs
-                table[i].mnemonic = "JMP";
+                table[i].mnemonic = MNEMONIC_JMP;
                 break;
             case 4:
-                table[i].mnemonic = "STY";
+                table[i].mnemonic = MNEMONIC_STY;
                 break;
             case 5:
-                table[i].mnemonic = "LDY";
+                table[i].mnemonic = MNEMONIC_LDY;
                 break;
             case 6:
-                table[i].mnemonic = "CPY";
+                table[i].mnemonic = MNEMONIC_CPY;
                 break;
             case 7:
-                table[i].mnemonic = "CPX";
+                table[i].mnemonic = MNEMONIC_CPX;
                 break;
             }
             Addressing adr;
@@ -477,31 +477,39 @@ void CPU::execute( const Instruction& instr )
 {
     InstructionDefinition def = InstructionDefinition::table()[ instr.opcode ];
 
-    if ( def.mnemonic == "JMP" ) {
+    switch ( def.mnemonic )
+    {
+    case InstructionDefinition::MNEMONIC_JMP: {
         uint16_t adr = (instr.operand2 << 8) + instr.operand1;
         pc = adr;
+        break;
     }
-    else if ( def.mnemonic == "LDX" ) {
+    case InstructionDefinition::MNEMONIC_LDX: {
         uint8_t src = resolveAddressing( instr );
         uint8_t *target = &regX;
         transfer( target, src );
+        break;
     }
-    else if ( def.mnemonic == "STX" ) {
+    case InstructionDefinition::MNEMONIC_STX: {
         uint8_t *target = memory + resolveAddressing( instr );
         uint8_t src = regX;
         transfer( target, src );
+        break;
     }
-    else if ( def.mnemonic == "JSR" ) {
+    case InstructionDefinition::MNEMONIC_JSR: {
         // jump to sub routine
         uint16_t adr = (instr.operand2 << 8) + instr.operand1;
         push( adr );
         pc = adr;
+        break;
     }
-    else if ( def.mnemonic == "BCS" ) {
+    case InstructionDefinition::MNEMONIC_BCS: {
         // branch if carry set
         uint16_t adr = pc + (int8_t)(instr.operand1 + 0);
         if ( status & FLAG_C_MASK ) {
             pc = adr;
         }
+        break;
+    }
     }
 }
