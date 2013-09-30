@@ -70,6 +70,8 @@ struct InstructionDefinition
     };
     Mnemonic mnemonic;
 
+    static const char * MnemonicString[56];
+
     // addressing mode
     enum Addressing
     {
@@ -163,6 +165,9 @@ struct CPU
     void execute( const Instruction& instr );
     void transfer( uint8_t* target, uint8_t src);
     uint8_t resolveAddressing( const Instruction& instr );
+
+    // update status based on a stored value
+    void updateStatus( uint8_t v );
 
     void push( uint16_t v );
     uint16_t pop();

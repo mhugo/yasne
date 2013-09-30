@@ -2,6 +2,66 @@
 #include <iomanip>
 #include "cpu.hpp"
 
+const char * InstructionDefinition::MnemonicString[56] = 
+{
+    "PHP",
+    "CLC",
+    "PLP",
+    "SEC",
+    "PHA",
+    "CLI",
+    "PLA",
+    "SEI",
+    "DEY",
+    "TYA",
+    "TAY",
+    "CLV",
+    "INY",
+    "CLD",
+    "INX",
+    "SED",
+    "TXA",
+    "TXS",
+    "TAX",
+    "TSX",
+    "DEX",
+    "NOP",
+    "BRK",
+    "BPL",
+    "JSR",
+    "BMI",
+    "RTI",
+    "BVC",
+    "RTS",
+    "BVS",
+    "BCC",
+    "BCS",
+    "BNE",
+    "BEQ",
+    "ORA",
+    "AND",
+    "EOR",
+    "ADC",
+    "STA",
+    "LDA",
+    "CMP",
+    "SBC",
+    "ASL",
+    "ROL",
+    "LSR",
+    "ROR",
+    "STX",
+    "LDX",
+    "DEC",
+    "INC",
+    "BIT",
+    "JMP",
+    "STY",
+    "LDY",
+    "CPY",
+    "CPX"
+};
+
 void InstructionDefinition::initTable()
 {
     InstructionDefinition* table = InstructionDefinition::table();
@@ -361,7 +421,6 @@ Instruction Instruction::decode( const uint8_t* adr )
     return instr;
 }
 
-
 std::ostream& operator<<( std::ostream& ostr, const Instruction& instr )
 {
     InstructionDefinition def = InstructionDefinition::table() [ instr.opcode ];
@@ -381,7 +440,7 @@ std::ostream& operator<<( std::ostream& ostr, const Instruction& instr )
         ostr << "\t\t";
     }
 
-    ostr << def.mnemonic;
+    ostr << InstructionDefinition::MnemonicString[def.mnemonic];
     if ( ! def.valid ) {
         ostr << std::dec << "ILLEGAL";
         return ostr;
@@ -389,8 +448,11 @@ std::ostream& operator<<( std::ostream& ostr, const Instruction& instr )
 
     switch ( def.addressing )
     {
+    case InstructionDefinition::ADDRESSING_NONE:
+        ostr << "\t";
+        break;
     case InstructionDefinition::ADDRESSING_IMMEDIATE:
-        ostr << "\t$" << std::setfill('0') << std::setw(2) << (instr.operand1+0);
+        ostr << "\t#$" << std::setfill('0') << std::setw(2) << (instr.operand1+0);
         break;
     case InstructionDefinition::ADDRESSING_ZERO_PAGE:
         ostr << "\t$" << std::setfill('0') << std::setw(2) << (instr.operand1+0);
@@ -473,6 +535,16 @@ uint16_t CPU::pop()
     // FIXME what if sp >= 0xFF
 }
 
+void CPU::updateStatus( uint8_t v )
+{
+    if ( v == 0 ) {
+        status |= FLAG_Z_MASK;
+    }
+    if ( v & 0x7F ) {
+        status |= FLAG_N_MASK;
+    }
+}
+
 void CPU::execute( const Instruction& instr )
 {
     InstructionDefinition def = InstructionDefinition::table()[ instr.opcode ];
@@ -484,15 +556,42 @@ void CPU::execute( const Instruction& instr )
         pc = adr;
         break;
     }
+    case InstructionDefinition::MNEMONIC_LDA: {
+        uint8_t src = resolveAddressing( instr );
+        uint8_t *target = &regA;
+        transfer( target, src );
+        updateStatus( *target );
+        break;
+    }
     case InstructionDefinition::MNEMONIC_LDX: {
         uint8_t src = resolveAddressing( instr );
         uint8_t *target = &regX;
+        transfer( target, src );
+        updateStatus( *target );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_LDY: {
+        uint8_t src = resolveAddressing( instr );
+        uint8_t *target = &regY;
+        transfer( target, src );
+        updateStatus( *target );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_STA: {
+        uint8_t *target = memory + resolveAddressing( instr );
+        uint8_t src = regA;
         transfer( target, src );
         break;
     }
     case InstructionDefinition::MNEMONIC_STX: {
         uint8_t *target = memory + resolveAddressing( instr );
         uint8_t src = regX;
+        transfer( target, src );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_STY: {
+        uint8_t *target = memory + resolveAddressing( instr );
+        uint8_t src = regY;
         transfer( target, src );
         break;
     }
@@ -509,6 +608,32 @@ void CPU::execute( const Instruction& instr )
         if ( status & FLAG_C_MASK ) {
             pc = adr;
         }
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_BCC: {
+        // branch if carry clear
+        uint16_t adr = pc + (int8_t)(instr.operand1 + 0);
+        if ( (status & FLAG_C_MASK) == 0 ) {
+            pc = adr;
+        }
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_BEQ: {
+        // branch if zero
+        uint16_t adr = pc + (int8_t)(instr.operand1 + 0);
+        if ( status & FLAG_Z_MASK ) {
+            pc = adr;
+        }
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_SEC: {
+        // set carry
+        status |= FLAG_C_MASK;
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_CLC: {
+        // clear carry
+        status &= (0xFF - FLAG_C_MASK);
         break;
     }
     }

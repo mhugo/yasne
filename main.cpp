@@ -28,13 +28,16 @@ int main( int argc, char *argv[] )
 
     cpu.pc = baseAddr;
     cpu.sp = 0xFD;
+    cpu.status = 0x24;
     //    while ( pc < memory + MEM_SIZE ) {
-    for ( int i = 0; i < 20; i++ ) {
+    for ( int i = 0; i < 50; i++ ) {
         const uint8_t* pt = (const uint8_t*)(memory + cpu.pc);
         Instruction instr = Instruction::decode( pt );
 
         std::cout << std::hex << std::setfill('0') << std::setw(4) << cpu.pc << "\t" << std::dec;
-        std::cout << instr << std::endl;
+        std::cout << instr;
+        std::cout << "\tA:" << (cpu.regA+0) << " X:" << (cpu.regX+0) << " Y:" << (cpu.regY+0) << " P:" << (cpu.status+0);
+        std::cout << std::endl;
         cpu.pc += instr.nOperands + 1;
         cpu.execute( instr );
     }
