@@ -8,7 +8,6 @@ void InstructionDefinition::initTable()
 
     for ( int i = 0; i < 256; i++ ) {
         table[i].opcode = i;
-        table[i].valid = false;
 
         // opcode = aaabbbcc
         int cc = i & 3;
@@ -16,14 +15,91 @@ void InstructionDefinition::initTable()
         int bbb = (i >> 2) & 7;
 
         std::cout << std::hex << i << " " << (i & 0x0F) << " cc = " << cc << " aaa = " << aaa << std::dec << std::endl;
-        if ( (i & 0x0F) == 0 ) { // branching instructions
+        // else
+
+        table[i].valid = true;
+        table[i].addressing = ADDRESSING_NONE;
+        switch (i)
+        {
+        case 0x08:
+            table[i].mnemonic = "PHP";
+            break;
+        case 0x18:
+            table[i].mnemonic = "CLC";
+            break;
+        case 0x28:
+            table[i].mnemonic = "PLP";
+            break;
+        case 0x38:
+            table[i].mnemonic = "SEC";
+            break;
+        case 0x48:
+            table[i].mnemonic = "PHA";
+            break;
+        case 0x58:
+            table[i].mnemonic = "CLI";
+            break;
+        case 0x68:
+            table[i].mnemonic = "PLA";
+            break;
+        case 0x78:
+            table[i].mnemonic = "SEI";
+            break;
+        case 0x88:
+            table[i].mnemonic = "DEY";
+            break;
+        case 0x98:
+            table[i].mnemonic = "TYA";
+            break;
+        case 0xA8:
+            table[i].mnemonic = "TAY";
+            break;
+        case 0xB8:
+            table[i].mnemonic = "CLV";
+            break;
+        case 0xC8:
+            table[i].mnemonic = "INY";
+            break;
+        case 0xD8:
+            table[i].mnemonic = "CLD";
+            break;
+        case 0xE8:
+            table[i].mnemonic = "INX";
+            break;
+        case 0xF8:
+            table[i].mnemonic = "SED";
+            break;
+        case 0x8A:
+            table[i].mnemonic = "TXA";
+            break;
+        case 0x9A:
+            table[i].mnemonic = "TXS";
+            break;
+        case 0xAA:
+            table[i].mnemonic = "TAX";
+            break;
+        case 0xBA:
+            table[i].mnemonic = "TSX";
+            break;
+        case 0xCA:
+            table[i].mnemonic = "DEX";
+            break;
+        case 0xEA:
+            table[i].mnemonic = "NOP";
+            break;
+        default:
+            table[i].valid = false;
+        }
+
+        if ( !table[i].valid && (i & 0x0F) == 0 ) { // branching instructions
             table[i].valid = true;
             int xx = i >> 4;
             std::cout << std::hex << xx << std::endl;
-            table[i].addressing = ADDRESSING_NONE;
+            table[i].addressing = ADDRESSING_RELATIVE;
             switch (xx) {
             case 0:
                 table[i].mnemonic = "BRK";
+                table[i].addressing = ADDRESSING_NONE;
                 break;
             case 1:
                 table[i].mnemonic = "BPL";
@@ -31,6 +107,7 @@ void InstructionDefinition::initTable()
             case 2:
                 // JSR abs
                 table[i].mnemonic = "JSR";
+                table[i].addressing = ADDRESSING_ABSOLUTE;
                 break;
             case 3:
                 // JMP abs
@@ -38,12 +115,14 @@ void InstructionDefinition::initTable()
                 break;
             case 4:
                 table[i].mnemonic = "RTI";
+                table[i].addressing = ADDRESSING_NONE;
                 break;
             case 5:
                 table[i].mnemonic = "BVC";
                 break;
             case 6:
                 table[i].mnemonic = "RTS";
+                table[i].addressing = ADDRESSING_NONE;
                 break;
             case 7:
                 table[i].mnemonic = "BVS";
@@ -64,7 +143,7 @@ void InstructionDefinition::initTable()
                 table[i].valid = false;
             }
         }
-        else if ( cc == 1 ) {
+        else if ( !table[i].valid && cc == 1 ) {
             table[i].valid = true;
             switch (aaa) {
             case 0:
@@ -122,7 +201,7 @@ void InstructionDefinition::initTable()
             }
             table[i].addressing = adr;
         }
-        else if ( cc == 2 ) {
+        else if ( !table[i].valid && cc == 2 ) {
             table[i].valid = true;
             switch (aaa) {
             case 0:
@@ -186,7 +265,7 @@ void InstructionDefinition::initTable()
             }
             table[i].addressing = adr;
         }
-        else if ( cc == 0 ) {
+        else if ( !table[i].valid && cc == 0 ) {
             table[i].valid = true;
             switch (aaa) {
             case 0:
@@ -238,83 +317,6 @@ void InstructionDefinition::initTable()
             table[i].addressing = adr;
         }
         
-        // else
-        if ( ! table[i].valid ) {
-            table[i].valid = true;
-            table[i].addressing = ADDRESSING_NONE;
-            switch (i)
-            {
-            case 0x08:
-                table[i].mnemonic = "PHP";
-                break;
-            case 0x18:
-                table[i].mnemonic = "CLC";
-                break;
-            case 0x28:
-                table[i].mnemonic = "PLP";
-                break;
-            case 0x38:
-                table[i].mnemonic = "SEC";
-                break;
-            case 0x48:
-                table[i].mnemonic = "PHA";
-                break;
-            case 0x58:
-                table[i].mnemonic = "CLI";
-                break;
-            case 0x68:
-                table[i].mnemonic = "PLA";
-                break;
-            case 0x78:
-                table[i].mnemonic = "SEI";
-                break;
-            case 0x88:
-                table[i].mnemonic = "DEY";
-                break;
-            case 0x98:
-                table[i].mnemonic = "TYA";
-                break;
-            case 0xA8:
-                table[i].mnemonic = "TAY";
-                break;
-            case 0xB8:
-                table[i].mnemonic = "CLV";
-                break;
-            case 0xC8:
-                table[i].mnemonic = "INY";
-                break;
-            case 0xD8:
-                table[i].mnemonic = "CLD";
-                break;
-            case 0xE8:
-                table[i].mnemonic = "INX";
-                break;
-            case 0xF8:
-                table[i].mnemonic = "SED";
-                break;
-            case 0x8A:
-                table[i].mnemonic = "TXA";
-                break;
-            case 0x9A:
-                table[i].mnemonic = "TXS";
-                break;
-            case 0xAA:
-                table[i].mnemonic = "TAX";
-                break;
-            case 0xBA:
-                table[i].mnemonic = "TSX";
-                break;
-            case 0xCA:
-                table[i].mnemonic = "DEX";
-                break;
-            case 0xEA:
-                table[i].mnemonic = "NOP";
-                break;
-            default:
-                table[i].valid = false;
-            }
-        }
-
         switch ( table[i].addressing )
         {
         case ADDRESSING_NONE:
@@ -322,6 +324,7 @@ void InstructionDefinition::initTable()
             table[i].nOperands = 0;
             break;
         case ADDRESSING_IMMEDIATE:
+        case ADDRESSING_RELATIVE:
         case ADDRESSING_ZERO_PAGE:
         case ADDRESSING_ZERO_PAGE_X:
         case ADDRESSING_ZERO_PAGE_Y:
@@ -390,11 +393,16 @@ std::ostream& operator<<( std::ostream& ostr, const Instruction& instr )
         ostr << "\t$" << std::setfill('0') << std::setw(2) << (instr.operand1+0);
         break;
     case InstructionDefinition::ADDRESSING_ZERO_PAGE:
-        ostr << "\tzero_page";
+        ostr << "\t$" << std::setfill('0') << std::setw(2) << (instr.operand1+0);
         break;
     case InstructionDefinition::ADDRESSING_ACCUMULATOR:
         ostr << "\taccumulator";
         break;
+    case InstructionDefinition::ADDRESSING_RELATIVE: {
+        int8_t rel = instr.operand1;
+        ostr << "\t" << std::setfill('0') << std::setw(2) << (rel+0);
+        break;
+    }
     case InstructionDefinition::ADDRESSING_ABSOLUTE: {
         uint16_t adr = (instr.operand2 << 8) + instr.operand1;
         ostr << "\t$" << std::setfill('0') << std::setw(4) << adr;
@@ -445,6 +453,26 @@ void CPU::transfer( uint8_t* target, uint8_t src )
     *target = src;
 }
 
+
+void CPU::push( uint16_t v )
+{
+    if ( sp > 0 ) {
+        sp -= 2;
+    }
+    // FIXME what if sp == 0 ?
+    memcpy(memory + sp, &v, 2 );
+}
+
+uint16_t CPU::pop()
+{
+    uint16_t v;
+    memcpy( &v, memory + sp, 2 );
+    if ( sp < 0xFF ) {
+        sp += 2;
+    }
+    // FIXME what if sp >= 0xFF
+}
+
 void CPU::execute( const Instruction& instr )
 {
     InstructionDefinition def = InstructionDefinition::table()[ instr.opcode ];
@@ -462,5 +490,18 @@ void CPU::execute( const Instruction& instr )
         uint8_t *target = memory + resolveAddressing( instr );
         uint8_t src = regX;
         transfer( target, src );
+    }
+    else if ( def.mnemonic == "JSR" ) {
+        // jump to sub routine
+        uint16_t adr = (instr.operand2 << 8) + instr.operand1;
+        push( adr );
+        pc = adr;
+    }
+    else if ( def.mnemonic == "BCS" ) {
+        // branch if carry set
+        uint16_t adr = pc + (int8_t)(instr.operand1 + 0);
+        if ( status & FLAG_C_MASK ) {
+            pc = adr;
+        }
     }
 }

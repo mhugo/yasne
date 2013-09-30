@@ -19,6 +19,7 @@ struct InstructionDefinition
         ADDRESSING_ZERO_PAGE,
         ADDRESSING_ACCUMULATOR,
         ADDRESSING_ABSOLUTE,
+        ADDRESSING_RELATIVE,
         ADDRESSING_INDIRECT,
         ADDRESSING_ABSOLUTE_X,
         ADDRESSING_ABSOLUTE_Y,
@@ -78,10 +79,20 @@ struct Instruction
 
 std::ostream& operator<<( std::ostream& ostr, const Instruction& instr );
 
+#define FLAG_N_MASK (1<<7)
+#define FLAG_V_MASK (1<<6)
+#define FLAG_X_MASK (1<<5)
+#define FLAG_B_MASK (1<<4)
+#define FLAG_D_MASK (1<<3)
+#define FLAG_I_MASK (1<<2)
+#define FLAG_Z_MASK (1<<1)
+#define FLAG_C_MASK (1<<0)
+
 struct CPU
 {
     uint8_t regA, regX, regY;
     uint8_t status;
+
     // stack pointer;
     uint8_t sp;
 
@@ -93,4 +104,7 @@ struct CPU
     void execute( const Instruction& instr );
     void transfer( uint8_t* target, uint8_t src);
     uint8_t resolveAddressing( const Instruction& instr );
+
+    void push( uint16_t v );
+    uint16_t pop();
 };

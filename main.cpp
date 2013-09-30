@@ -27,8 +27,9 @@ int main( int argc, char *argv[] )
     CPU cpu;
 
     cpu.pc = baseAddr;
+    cpu.sp = 0xFD;
     //    while ( pc < memory + MEM_SIZE ) {
-    for ( int i = 0; i < 10; i++ ) {
+    for ( int i = 0; i < 20; i++ ) {
         const uint8_t* pt = (const uint8_t*)(memory + cpu.pc);
         Instruction instr = Instruction::decode( pt );
 
