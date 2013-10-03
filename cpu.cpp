@@ -455,7 +455,7 @@ std::ostream& operator<<( std::ostream& ostr, const Instruction& instr )
         ostr << "\t#$" << std::setfill('0') << std::setw(2) << (instr.operand1+0);
         break;
     case InstructionDefinition::ADDRESSING_ZERO_PAGE:
-        ostr << "\t$" << std::setfill('0') << std::setw(2) << (instr.operand1+0);
+        ostr << "\tZP$" << std::setfill('0') << std::setw(2) << (instr.operand1+0);
         break;
     case InstructionDefinition::ADDRESSING_ACCUMULATOR:
         ostr << "\taccumulator";
@@ -537,11 +537,37 @@ uint16_t CPU::pop()
 
 void CPU::updateStatus( uint8_t v )
 {
+    updateZStatus( v );
+    updateNStatus( v );
+}
+
+void CPU::updateVStatus( uint8_t v ) 
+{
+    if ( v & 0x40 ) {
+        status |= FLAG_V_MASK;
+    }
+    else {
+        status &= (0xFF-FLAG_V_MASK);
+    }
+}
+
+void CPU::updateZStatus( uint8_t v )
+{
     if ( v == 0 ) {
         status |= FLAG_Z_MASK;
     }
-    if ( v & 0x7F ) {
+    else {
+        status &= (0xFF-FLAG_Z_MASK);
+    }
+}
+
+void CPU::updateNStatus( uint8_t v )
+{
+    if ( v & 0x80 ) {
         status |= FLAG_N_MASK;
+    }
+    else {
+        status &= (0xFF-FLAG_N_MASK);
     }
 }
 
@@ -626,6 +652,30 @@ void CPU::execute( const Instruction& instr )
         }
         break;
     }
+    case InstructionDefinition::MNEMONIC_BNE: {
+        // branch if non zero
+        uint16_t adr = pc + (int8_t)(instr.operand1 + 0);
+        if ( (status & FLAG_Z_MASK) == 0 ) {
+            pc = adr;
+        }
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_BVS: {
+        // branch if V set
+        uint16_t adr = pc + (int8_t)(instr.operand1 + 0);
+        if ( status & FLAG_V_MASK ) {
+            pc = adr;
+        }
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_BVC: {
+        // branch if V clear
+        uint16_t adr = pc + (int8_t)(instr.operand1 + 0);
+        if ( (status & FLAG_V_MASK) == 0 ) {
+            pc = adr;
+        }
+        break;
+    }
     case InstructionDefinition::MNEMONIC_SEC: {
         // set carry
         status |= FLAG_C_MASK;
@@ -634,6 +684,16 @@ void CPU::execute( const Instruction& instr )
     case InstructionDefinition::MNEMONIC_CLC: {
         // clear carry
         status &= (0xFF - FLAG_C_MASK);
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_BIT: {
+        // bit test
+        uint8_t *src = memory + resolveAddressing( instr );
+        
+        uint8_t r = *src & regA;
+        updateZStatus( r );
+        updateNStatus( *src );
+        updateVStatus( *src );
         break;
     }
     }

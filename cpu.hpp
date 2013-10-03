@@ -168,6 +168,10 @@ struct CPU
 
     // update status based on a stored value
     void updateStatus( uint8_t v );
+    // update V flag
+    void updateVStatus( uint8_t v );
+    void updateNStatus( uint8_t v );
+    void updateZStatus( uint8_t v );
 
     void push( uint16_t v );
     uint16_t pop();
