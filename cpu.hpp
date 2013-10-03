@@ -165,6 +165,7 @@ struct CPU
     void execute( const Instruction& instr );
     void transfer( uint8_t* target, uint8_t src);
     uint8_t resolveAddressing( const Instruction& instr );
+    uint8_t* resolveWAddressing( const Instruction& instr );
 
     // update status based on a stored value
     void updateStatus( uint8_t v );
@@ -174,5 +175,7 @@ struct CPU
     void updateZStatus( uint8_t v );
 
     void push( uint16_t v );
+    void pushByte( uint8_t v );
     uint16_t pop();
+    uint8_t popByte();
 };

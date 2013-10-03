@@ -510,6 +510,19 @@ uint8_t CPU::resolveAddressing( const Instruction& instr )
     }
 }
 
+uint8_t* CPU::resolveWAddressing( const Instruction& instr )
+{
+    InstructionDefinition def = InstructionDefinition::table()[ instr.opcode ];
+
+    switch ( def.addressing )
+    {
+    case InstructionDefinition::ADDRESSING_ZERO_PAGE:
+        return memory + instr.operand1;
+        break;
+    }
+    return 0;
+}
+
 void CPU::transfer( uint8_t* target, uint8_t src )
 {
     *target = src;
@@ -518,11 +531,14 @@ void CPU::transfer( uint8_t* target, uint8_t src )
 
 void CPU::push( uint16_t v )
 {
-    if ( sp > 0 ) {
-        sp -= 2;
-    }
-    // FIXME what if sp == 0 ?
+    sp -= 2;
     memcpy(memory + sp, &v, 2 );
+}
+
+void CPU::pushByte( uint8_t v )
+{
+    sp--;
+    memcpy(memory + sp, &v, 1 );
 }
 
 uint16_t CPU::pop()
@@ -532,7 +548,17 @@ uint16_t CPU::pop()
     if ( sp < 0xFF ) {
         sp += 2;
     }
-    // FIXME what if sp >= 0xFF
+    return v;
+}
+
+uint8_t CPU::popByte()
+{
+    uint8_t v;
+    memcpy( &v, memory + sp, 1 );
+    if ( sp < 0xFF ) {
+        sp ++;
+    }
+    return v;
 }
 
 void CPU::updateStatus( uint8_t v )
@@ -604,19 +630,19 @@ void CPU::execute( const Instruction& instr )
         break;
     }
     case InstructionDefinition::MNEMONIC_STA: {
-        uint8_t *target = memory + resolveAddressing( instr );
+        uint8_t *target = resolveWAddressing( instr );
         uint8_t src = regA;
         transfer( target, src );
         break;
     }
     case InstructionDefinition::MNEMONIC_STX: {
-        uint8_t *target = memory + resolveAddressing( instr );
+        uint8_t *target = resolveWAddressing( instr );
         uint8_t src = regX;
         transfer( target, src );
         break;
     }
     case InstructionDefinition::MNEMONIC_STY: {
-        uint8_t *target = memory + resolveAddressing( instr );
+        uint8_t *target = resolveWAddressing( instr );
         uint8_t src = regY;
         transfer( target, src );
         break;
@@ -624,8 +650,13 @@ void CPU::execute( const Instruction& instr )
     case InstructionDefinition::MNEMONIC_JSR: {
         // jump to sub routine
         uint16_t adr = (instr.operand2 << 8) + instr.operand1;
-        push( adr );
+        push( pc );
         pc = adr;
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_RTS: {
+        // return from subroutine
+        pc = pop();
         break;
     }
     case InstructionDefinition::MNEMONIC_BCS: {
@@ -676,6 +707,22 @@ void CPU::execute( const Instruction& instr )
         }
         break;
     }
+    case InstructionDefinition::MNEMONIC_BPL: {
+        // branch if PLUS
+        uint16_t adr = pc + (int8_t)(instr.operand1 + 0);
+        if ( (status & FLAG_N_MASK) == 0 ) {
+            pc = adr;
+        }
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_BMI: {
+        // branch if Minus
+        uint16_t adr = pc + (int8_t)(instr.operand1 + 0);
+        if ( status & FLAG_N_MASK ) {
+            pc = adr;
+        }
+        break;
+    }
     case InstructionDefinition::MNEMONIC_SEC: {
         // set carry
         status |= FLAG_C_MASK;
@@ -686,14 +733,59 @@ void CPU::execute( const Instruction& instr )
         status &= (0xFF - FLAG_C_MASK);
         break;
     }
+    case InstructionDefinition::MNEMONIC_SED: {
+        // set decimal flag (used ??)
+        status |= FLAG_D_MASK;
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_CLD: {
+        // clear decimal flag (used ??)
+        status &= (0xFF-FLAG_D_MASK);
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_SEI: {
+        // set interrupt disable
+        status |= FLAG_I_MASK;
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_CLI: {
+        // set interrupt enable
+        status &= (0xFF-FLAG_I_MASK);
+        break;
+    }
     case InstructionDefinition::MNEMONIC_BIT: {
         // bit test
-        uint8_t *src = memory + resolveAddressing( instr );
+        uint8_t src = resolveAddressing( instr );
+        std::cout << "= " << (src+0) << std::endl;
         
-        uint8_t r = *src & regA;
+        uint8_t r = src & regA;
         updateZStatus( r );
-        updateNStatus( *src );
-        updateVStatus( *src );
+        updateNStatus( src );
+        updateVStatus( src );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_PHP: {
+        // push processor flags
+        uint8_t st = status;
+        // no B flag, it is considered 1
+        st |= FLAG_B_MASK;
+        pushByte( st );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_PLA: {
+        // pull to accumulator
+        regA = popByte();
+        updateZStatus( regA );
+        updateNStatus( regA );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_AND: {
+        // AND regA & operand
+        uint8_t mem = resolveAddressing( instr );
+        std::cout << "= " << (mem+0) << std::endl;
+        regA = regA & mem;
+        updateZStatus(regA);
+        updateNStatus(regA);
         break;
     }
     }

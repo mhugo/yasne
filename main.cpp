@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
+#include <vector>
 
 #include "nes_file_importer.hpp"
 #include "cpu.hpp"
@@ -26,7 +27,9 @@ int main( int argc, char *argv[] )
     std::cout << header << std::endl;
 
     const uint16_t baseAddr = 0xC000;
-    memory = new uint8_t[MEM_SIZE];
+    std::vector<uint8_t> mem(MEM_SIZE);
+    memory = &mem[0];
+    memset( memory, 0xFF, MEM_SIZE );
     nesFile.read( (char*)(memory + baseAddr), 16384 );
 
     InstructionDefinition::initTable();
@@ -56,12 +59,14 @@ int main( int argc, char *argv[] )
         std::string reg_x_str = line.substr(55,2);
         std::string reg_y_str = line.substr(60,2);
         std::string reg_p_str = line.substr(65,2);
-        unsigned int addr, regA, regX, regY, regP;
+        std::string reg_sp_str = line.substr(71,2);
+        unsigned int addr, regA, regX, regY, regP, regSP;
         sscanf( log_pc_str.c_str(), "%04X", &addr );
-        sscanf( reg_a_str.c_str(), "%04X", &regA );
-        sscanf( reg_x_str.c_str(), "%04X", &regX );
-        sscanf( reg_y_str.c_str(), "%04X", &regY );
-        sscanf( reg_p_str.c_str(), "%04X", &regP );
+        sscanf( reg_a_str.c_str(), "%02X", &regA );
+        sscanf( reg_x_str.c_str(), "%02X", &regX );
+        sscanf( reg_y_str.c_str(), "%02X", &regY );
+        sscanf( reg_p_str.c_str(), "%02X", &regP );
+        sscanf( reg_sp_str.c_str(), "%02X", &regSP );
 
         const uint8_t* pt = (const uint8_t*)(memory + cpu.pc);
         Instruction instr = Instruction::decode( pt );
@@ -70,16 +75,17 @@ int main( int argc, char *argv[] )
         std::cout << std::hex << std::setfill('0') << std::setw(4) << cpu.pc << "\t" << std::dec;
         std::cout << instr;
 
-        std::cout << "\tA:" << (cpu.regA+0) << " X:" << (cpu.regX+0) << " Y:" << (cpu.regY+0) << " P:" << (cpu.status+0);
+        std::cout << "\tA:" << (cpu.regA+0) << " X:" << (cpu.regX+0) << " Y:" << (cpu.regY+0) << " P:" << (cpu.status+0) << " SP:" << (cpu.sp+0);
         std::cout << std::endl;
 
         if ( (cpu_pc != addr ) ||
              (cpu.regA != regA) ||
              (cpu.regX != regX) ||
              (cpu.regY != regY) ||
-             (cpu.status != regP ) ) {
+             (cpu.status != regP ) ||
+             (cpu.sp != regSP )) {
             std::cout << "Wrong status !" << std::endl;
-            std::cout << "Expected : " << addr << " A:"<<regA << " X:" << regX << " Y:" << regY << " P:" << regP << std::endl;
+            std::cout << "Expected : " << addr << " A:"<<regA << " X:" << regX << " Y:" << regY << " P:" << regP << " SP:" << regSP << std::endl;
             break;
         }
 
