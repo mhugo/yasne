@@ -788,5 +788,21 @@ void CPU::execute( const Instruction& instr )
         updateNStatus(regA);
         break;
     }
+    case InstructionDefinition::MNEMONIC_CMP: {
+        // CMP regA  operand
+        uint8_t mem = resolveAddressing( instr );
+        std::cout << "= " << (mem+0) << std::endl;
+        uint8_t d = regA - mem;
+        if ( d >= 0 ) {
+            status |= FLAG_C_MASK;
+        }
+        else
+        {
+            status &= (0xFF - FLAG_C_MASK);
+        }
+        updateZStatus(d);
+        updateNStatus(d);
+        break;
+    }
     }
 }
