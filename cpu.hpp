@@ -166,8 +166,10 @@ struct CPU
     uint8_t resolveAddressing( const Instruction& instr );
     uint16_t resolveWAddressing( const Instruction& instr );
 
-    uint8_t readMem( uint16_t addr );
-    void writeMem( uint16_t addr, uint8_t v );
+    uint8_t readMem8( uint16_t addr );
+    uint16_t readMem16( uint16_t addr );
+    void writeMem8( uint16_t addr, uint8_t v );
+    void writeMem16( uint16_t addr, uint16_t v );
 
     // update status based on a stored value
     void updateStatus( uint8_t v );

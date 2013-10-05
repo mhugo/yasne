@@ -466,7 +466,7 @@ std::ostream& operator<<( std::ostream& ostr, const Instruction& instr )
         break;
     case InstructionDefinition::ADDRESSING_RELATIVE: {
         int8_t rel = instr.operand1;
-        ostr << "\t" << std::setfill('0') << std::setw(2) << (rel+0);
+        ostr << "\t" << ((rel>=0)?"+":"") << std::setfill('0') << std::setw(2) << (rel+0);
         break;
     }
     case InstructionDefinition::ADDRESSING_ABSOLUTE: {
@@ -499,14 +499,23 @@ std::ostream& operator<<( std::ostream& ostr, const Instruction& instr )
     return ostr;
 }
 
-uint8_t CPU::readMem( uint16_t addr )
+uint8_t CPU::readMem8( uint16_t addr )
 {
     std::cout << "@" << std::setw(4) << std::setfill('0') << addr;
-    std::cout << " = " << (memory[addr]+0) << std::endl;
+    std::cout << " => " << (memory[addr]+0) << std::endl;
     return memory[ addr ];
 }
 
-void CPU::writeMem( uint16_t addr, uint8_t v )
+uint16_t CPU::readMem16( uint16_t addr )
+{
+    std::cout << "@" << std::setw(4) << std::setfill('0') << addr;
+    uint16_t v;
+    memcpy( &v, memory + addr, 2 );
+    std::cout << " => " << v << std::endl;
+    return v;
+}
+
+void CPU::writeMem8( uint16_t addr, uint8_t v )
 {
     if ( addr >= 0x4020 ) {
         throw std::runtime_error( (boost::format("Can't write to %1%") % addr).str() );
@@ -514,6 +523,16 @@ void CPU::writeMem( uint16_t addr, uint8_t v )
     std::cout << "@" << std::setw(4) << std::setfill('0') << addr ;
     std::cout << " <= " << (v+0) << std::endl;
     memory[addr] = v;
+}
+
+void CPU::writeMem16( uint16_t addr, uint16_t v )
+{
+    if ( addr >= 0x4020 ) {
+        throw std::runtime_error( (boost::format("Can't write to %1%") % addr).str() );
+    }
+    std::cout << "@" << std::setw(4) << std::setfill('0') << addr ;
+    std::cout << " <= " << v << std::endl;
+    memcpy( memory + addr, &v, 2 );
 }
 
 uint8_t CPU::resolveAddressing( const Instruction& instr )
@@ -526,10 +545,10 @@ uint8_t CPU::resolveAddressing( const Instruction& instr )
         return instr.operand1;
         break;
     case InstructionDefinition::ADDRESSING_ZERO_PAGE:
-        return readMem( instr.operand1 );
+        return readMem8( instr.operand1 );
         break;
     case InstructionDefinition::ADDRESSING_ABSOLUTE:
-        return readMem( instr.operand1 + (instr.operand2 << 8) );
+        return readMem8( instr.operand1 + (instr.operand2 << 8) );
     default:
         std::cout << "Unsupported addressing" << std::endl;
     }
@@ -557,33 +576,29 @@ uint16_t CPU::resolveWAddressing( const Instruction& instr )
 
 void CPU::push( uint16_t v )
 {
-    sp -= 2;
-    memcpy(memory + sp, &v, 2 );
+    pushByte( v >> 8 );
+    pushByte( v & 0xff );
 }
 
 void CPU::pushByte( uint8_t v )
 {
+    writeMem8( 0x100 + sp, v );
     sp--;
-    memcpy(memory + sp, &v, 1 );
 }
 
 uint16_t CPU::pop()
 {
-    uint16_t v;
-    memcpy( &v, memory + sp, 2 );
-    if ( sp < 0xFF ) {
-        sp += 2;
-    }
+    uint16_t v = 0;
+    v = popByte();
+    v |= popByte() << 8;
     return v;
 }
 
 uint8_t CPU::popByte()
 {
     uint8_t v;
-    memcpy( &v, memory + sp, 1 );
-    if ( sp < 0xFF ) {
-        sp ++;
-    }
+    sp ++;
+    v = readMem8( 0x100 + sp );
     return v;
 }
 
@@ -655,31 +670,32 @@ void CPU::execute( const Instruction& instr )
     case InstructionDefinition::MNEMONIC_STA: {
         uint16_t target = resolveWAddressing( instr );
         uint8_t src = regA;
-        writeMem( target, src);
+        writeMem8( target, src);
         break;
     }
     case InstructionDefinition::MNEMONIC_STX: {
         uint16_t target = resolveWAddressing( instr );
         uint8_t src = regX;
-        writeMem( target, src );
+        writeMem8( target, src );
         break;
     }
     case InstructionDefinition::MNEMONIC_STY: {
         uint16_t target = resolveWAddressing( instr );
         uint8_t src = regY;
-        writeMem( target, src );
+        writeMem8( target, src );
         break;
     }
     case InstructionDefinition::MNEMONIC_JSR: {
         // jump to sub routine
         uint16_t adr = (instr.operand2 << 8) + instr.operand1;
-        push( pc );
+        std::cout << "pc = " << pc << std::endl;
+        push( pc - 1 );
         pc = adr;
         break;
     }
     case InstructionDefinition::MNEMONIC_RTS: {
         // return from subroutine
-        pc = pop();
+        pc = pop() + 1;
         break;
     }
     case InstructionDefinition::MNEMONIC_BCS: {
