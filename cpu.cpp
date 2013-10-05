@@ -462,7 +462,7 @@ std::ostream& operator<<( std::ostream& ostr, const Instruction& instr )
         ostr << "\tZP$" << std::setfill('0') << std::setw(2) << (instr.operand1+0);
         break;
     case InstructionDefinition::ADDRESSING_ACCUMULATOR:
-        ostr << "\taccumulator";
+        ostr << "\tA";
         break;
     case InstructionDefinition::ADDRESSING_RELATIVE: {
         int8_t rel = instr.operand1;
@@ -696,6 +696,16 @@ void CPU::execute( const Instruction& instr )
     case InstructionDefinition::MNEMONIC_RTS: {
         // return from subroutine
         pc = pop() + 1;
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_RTI: {
+        // return from interrupt
+        status = popByte();
+        // no B flag, it is considered 0
+        status &= (0xFF-FLAG_B_MASK);
+        // bit 5 is always 1
+        status |= FLAG_X_MASK;
+        pc = pop();
         break;
     }
     case InstructionDefinition::MNEMONIC_BCS: {
@@ -1019,6 +1029,114 @@ void CPU::execute( const Instruction& instr )
     case InstructionDefinition::MNEMONIC_TXS: {
         // transfer X to SP
         sp = regX;
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_LSR: {
+        // logical shift right
+        bool isAccu = def.addressing == InstructionDefinition::ADDRESSING_ACCUMULATOR;
+        uint8_t v = regA;
+        uint16_t addr;
+        if ( !isAccu ) {
+            addr = resolveWAddressing( instr );
+            v = readMem8( addr );
+        }
+        if ( v & 0x1 ) {
+            status |= FLAG_C_MASK;
+        }
+        else {
+            status &= ~FLAG_C_MASK;
+        }
+        v = v >> 1;
+        if ( isAccu ) {
+            regA = v;
+        }
+        else {
+            writeMem8( addr, v );
+        }
+        updateNStatus( v );
+        updateZStatus( v );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_ASL: {
+        // aithmetic shift left
+        bool isAccu = def.addressing == InstructionDefinition::ADDRESSING_ACCUMULATOR;
+        uint8_t v = regA;
+        uint16_t addr;
+        if ( !isAccu ) {
+            addr = resolveWAddressing( instr );
+            v = readMem8( addr );
+        }
+        uint16_t t = v << 1;
+        if ( t & 0x100 ) {
+            status |= FLAG_C_MASK;
+        }
+        else {
+            status &= ~FLAG_C_MASK;
+        }
+        v = t & 0xFF;
+        if ( isAccu ) {
+            regA = v;
+        }
+        else {
+            writeMem8( addr, v );
+        }
+        updateNStatus( v );
+        updateZStatus( v );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_ROR: {
+        // rotate right
+        bool isAccu = def.addressing == InstructionDefinition::ADDRESSING_ACCUMULATOR;
+        uint8_t v = regA;
+        uint16_t addr;
+        if ( !isAccu ) {
+            addr = resolveWAddressing( instr );
+            v = readMem8( addr );
+        }
+        uint8_t t = (((status&FLAG_C_MASK)?1:0) << 7) | (v >> 1);
+        if ( v & 1 ) {
+            status |= FLAG_C_MASK;
+        }
+        else {
+            status &= ~FLAG_C_MASK;
+        }
+        v = t;
+        if ( isAccu ) {
+            regA = v;
+        }
+        else {
+            writeMem8( addr, v );
+        }
+        updateNStatus( v );
+        updateZStatus( v );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_ROL: {
+        // rotate left
+        bool isAccu = def.addressing == InstructionDefinition::ADDRESSING_ACCUMULATOR;
+        uint8_t v = regA;
+        uint16_t addr;
+        if ( !isAccu ) {
+            addr = resolveWAddressing( instr );
+            v = readMem8( addr );
+        }
+        int oldCarry = (status & FLAG_C_MASK) ? 1:0;
+        uint16_t t = v << 1;
+        if ( t & 0x100 ) {
+            status |= FLAG_C_MASK;
+        }
+        else {
+            status &= ~FLAG_C_MASK;
+        }
+        v = (t & 0xFF) | oldCarry;
+        if ( isAccu ) {
+            regA = v;
+        }
+        else {
+            writeMem8( addr, v );
+        }
+        updateNStatus( v );
+        updateZStatus( v );
         break;
     }
     }
