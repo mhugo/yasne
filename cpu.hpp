@@ -137,12 +137,12 @@ struct Instruction
 
     static Instruction decode( const uint8_t* adr );
 };
-
 std::ostream& operator<<( std::ostream& ostr, const Instruction& instr );
+
 
 #define FLAG_N_MASK (1<<7)
 #define FLAG_V_MASK (1<<6)
-#define FLAG_X_MASK (1<<5)
+#define FLAG_X_MASK (1<<5) // not used
 #define FLAG_B_MASK (1<<4)
 #define FLAG_D_MASK (1<<3)
 #define FLAG_I_MASK (1<<2)
@@ -163,9 +163,11 @@ struct CPU
     uint8_t *memory;
 
     void execute( const Instruction& instr );
-    void transfer( uint8_t* target, uint8_t src);
     uint8_t resolveAddressing( const Instruction& instr );
-    uint8_t* resolveWAddressing( const Instruction& instr );
+    uint16_t resolveWAddressing( const Instruction& instr );
+
+    uint8_t readMem( uint16_t addr );
+    void writeMem( uint16_t addr, uint8_t v );
 
     // update status based on a stored value
     void updateStatus( uint8_t v );

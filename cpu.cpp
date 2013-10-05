@@ -1,5 +1,9 @@
+#include <stdexcept>
 #include <iostream>
 #include <iomanip>
+
+#include <boost/format.hpp>
+
 #include "cpu.hpp"
 
 const char * InstructionDefinition::MnemonicString[56] = 
@@ -74,7 +78,7 @@ void InstructionDefinition::initTable()
         int aaa = i >> 5;
         int bbb = (i >> 2) & 7;
 
-        std::cout << std::hex << i << " " << (i & 0x0F) << " cc = " << cc << " aaa = " << aaa << std::dec << std::endl;
+        std::cout << std::hex << i << " " << (i & 0x0F) << " cc = " << cc << " aaa = " << aaa << " bbb = " << bbb << std::dec << std::endl;
         // else
 
         table[i].valid = true;
@@ -325,7 +329,7 @@ void InstructionDefinition::initTable()
             }
             table[i].addressing = adr;
         }
-        else if ( !table[i].valid && cc == 0 ) {
+        if ( !table[i].valid && cc == 0 ) {
             table[i].valid = true;
             switch (aaa) {
             case 0:
@@ -495,6 +499,23 @@ std::ostream& operator<<( std::ostream& ostr, const Instruction& instr )
     return ostr;
 }
 
+uint8_t CPU::readMem( uint16_t addr )
+{
+    std::cout << "@" << std::setw(4) << std::setfill('0') << addr;
+    std::cout << " = " << (memory[addr]+0) << std::endl;
+    return memory[ addr ];
+}
+
+void CPU::writeMem( uint16_t addr, uint8_t v )
+{
+    if ( addr >= 0x4020 ) {
+        throw std::runtime_error( (boost::format("Can't write to %1%") % addr).str() );
+    }
+    std::cout << "@" << std::setw(4) << std::setfill('0') << addr ;
+    std::cout << " <= " << (v+0) << std::endl;
+    memory[addr] = v;
+}
+
 uint8_t CPU::resolveAddressing( const Instruction& instr )
 {
     InstructionDefinition def = InstructionDefinition::table()[ instr.opcode ];
@@ -505,29 +526,34 @@ uint8_t CPU::resolveAddressing( const Instruction& instr )
         return instr.operand1;
         break;
     case InstructionDefinition::ADDRESSING_ZERO_PAGE:
-        return memory[ instr.operand1 ];
+        return readMem( instr.operand1 );
         break;
+    case InstructionDefinition::ADDRESSING_ABSOLUTE:
+        return readMem( instr.operand1 + (instr.operand2 << 8) );
+    default:
+        std::cout << "Unsupported addressing" << std::endl;
     }
 }
 
-uint8_t* CPU::resolveWAddressing( const Instruction& instr )
+uint16_t CPU::resolveWAddressing( const Instruction& instr )
 {
     InstructionDefinition def = InstructionDefinition::table()[ instr.opcode ];
 
     switch ( def.addressing )
     {
     case InstructionDefinition::ADDRESSING_ZERO_PAGE:
-        return memory + instr.operand1;
+        return instr.operand1;
         break;
+    case InstructionDefinition::ADDRESSING_ABSOLUTE: {
+        uint16_t adr = instr.operand1 + (instr.operand2 << 8);
+        return adr;
+        break;
+    }
+    default:
+        std::cout << "Unsupport W addressing " << def.addressing << std::endl;
     }
     return 0;
 }
-
-void CPU::transfer( uint8_t* target, uint8_t src )
-{
-    *target = src;
-}
-
 
 void CPU::push( uint16_t v )
 {
@@ -610,41 +636,38 @@ void CPU::execute( const Instruction& instr )
     }
     case InstructionDefinition::MNEMONIC_LDA: {
         uint8_t src = resolveAddressing( instr );
-        uint8_t *target = &regA;
-        transfer( target, src );
-        updateStatus( *target );
+        regA = src;
+        updateStatus( regA );
         break;
     }
     case InstructionDefinition::MNEMONIC_LDX: {
         uint8_t src = resolveAddressing( instr );
-        uint8_t *target = &regX;
-        transfer( target, src );
-        updateStatus( *target );
+        regX = src;
+        updateStatus( regX );
         break;
     }
     case InstructionDefinition::MNEMONIC_LDY: {
         uint8_t src = resolveAddressing( instr );
-        uint8_t *target = &regY;
-        transfer( target, src );
-        updateStatus( *target );
+        regY = src;
+        updateStatus( regY );
         break;
     }
     case InstructionDefinition::MNEMONIC_STA: {
-        uint8_t *target = resolveWAddressing( instr );
+        uint16_t target = resolveWAddressing( instr );
         uint8_t src = regA;
-        transfer( target, src );
+        writeMem( target, src);
         break;
     }
     case InstructionDefinition::MNEMONIC_STX: {
-        uint8_t *target = resolveWAddressing( instr );
+        uint16_t target = resolveWAddressing( instr );
         uint8_t src = regX;
-        transfer( target, src );
+        writeMem( target, src );
         break;
     }
     case InstructionDefinition::MNEMONIC_STY: {
-        uint8_t *target = resolveWAddressing( instr );
+        uint16_t target = resolveWAddressing( instr );
         uint8_t src = regY;
-        transfer( target, src );
+        writeMem( target, src );
         break;
     }
     case InstructionDefinition::MNEMONIC_JSR: {
@@ -743,6 +766,11 @@ void CPU::execute( const Instruction& instr )
         status &= (0xFF-FLAG_D_MASK);
         break;
     }
+    case InstructionDefinition::MNEMONIC_CLV: {
+        // clear overflow flag
+        status &= (0xFF-FLAG_V_MASK);
+        break;
+    }
     case InstructionDefinition::MNEMONIC_SEI: {
         // set interrupt disable
         status |= FLAG_I_MASK;
@@ -756,7 +784,6 @@ void CPU::execute( const Instruction& instr )
     case InstructionDefinition::MNEMONIC_BIT: {
         // bit test
         uint8_t src = resolveAddressing( instr );
-        std::cout << "= " << (src+0) << std::endl;
         
         uint8_t r = src & regA;
         updateZStatus( r );
@@ -769,7 +796,14 @@ void CPU::execute( const Instruction& instr )
         uint8_t st = status;
         // no B flag, it is considered 1
         st |= FLAG_B_MASK;
+        // bit 5 is always 1 when pushed
+        st |= FLAG_X_MASK;
         pushByte( st );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_PHA: {
+        // push accumulator
+        pushByte( regA );
         break;
     }
     case InstructionDefinition::MNEMONIC_PLA: {
@@ -779,11 +813,35 @@ void CPU::execute( const Instruction& instr )
         updateNStatus( regA );
         break;
     }
+    case InstructionDefinition::MNEMONIC_PLP: {
+        // pull to status
+        status = popByte();
+        // no B flag, it is considered 0
+        status &= (0xFF-FLAG_B_MASK);
+        // bit 5 is always 1
+        status |= FLAG_X_MASK;
+        break;
+    }
     case InstructionDefinition::MNEMONIC_AND: {
         // AND regA & operand
         uint8_t mem = resolveAddressing( instr );
-        std::cout << "= " << (mem+0) << std::endl;
         regA = regA & mem;
+        updateZStatus(regA);
+        updateNStatus(regA);
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_ORA: {
+        // OR regA & operand
+        uint8_t mem = resolveAddressing( instr );
+        regA = regA | mem;
+        updateZStatus(regA);
+        updateNStatus(regA);
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_EOR: {
+        // XOR regA & operand
+        uint8_t mem = resolveAddressing( instr );
+        regA = regA ^ mem;
         updateZStatus(regA);
         updateNStatus(regA);
         break;
@@ -791,8 +849,7 @@ void CPU::execute( const Instruction& instr )
     case InstructionDefinition::MNEMONIC_CMP: {
         // CMP regA  operand
         uint8_t mem = resolveAddressing( instr );
-        std::cout << "= " << (mem+0) << std::endl;
-        uint8_t d = regA - mem;
+        int16_t d = regA - mem;
         if ( d >= 0 ) {
             status |= FLAG_C_MASK;
         }
@@ -802,6 +859,150 @@ void CPU::execute( const Instruction& instr )
         }
         updateZStatus(d);
         updateNStatus(d);
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_CPX: {
+        // CMP regX  operand
+        uint8_t mem = resolveAddressing( instr );
+        int16_t d = regX - mem;
+        if ( d >= 0 ) {
+            status |= FLAG_C_MASK;
+        }
+        else
+        {
+            status &= (0xFF - FLAG_C_MASK);
+        }
+        updateZStatus(d);
+        updateNStatus(d);
+        break;
+    }
+     case InstructionDefinition::MNEMONIC_CPY: {
+        // CMP regY  operand
+        uint8_t mem = resolveAddressing( instr );
+        int16_t d = regY - mem;
+        if ( d >= 0 ) {
+            status |= FLAG_C_MASK;
+        }
+        else
+        {
+            status &= (0xFF - FLAG_C_MASK);
+        }
+        updateZStatus(d);
+        updateNStatus(d);
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_ADC: {
+        // add with carry A+M+C
+        uint8_t mem = resolveAddressing( instr );
+        uint16_t s = regA + mem + ((status & FLAG_C_MASK) ? 1 : 0);
+        int16_t s2 = (int8_t)regA + (int8_t)mem + ((status & FLAG_C_MASK) ? 1 : 0);
+        if ( s > 0xFF ) {
+            status |= FLAG_C_MASK;
+        }
+        else
+        {
+            status &= (0xFF - FLAG_C_MASK);
+        }
+        regA = s & 0xFF;
+        updateZStatus(regA);
+        updateNStatus(regA);
+        if ( (s2 < -128) || (s2 > 127) ) {
+            status |= FLAG_V_MASK;
+        }
+        else {
+            status &= (0xFF - FLAG_V_MASK);
+        }
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_SBC: {
+        // substract with not carry A-M-(1-C)
+        uint8_t mem = resolveAddressing( instr );
+        uint16_t s = regA - mem - ((status & FLAG_C_MASK) ? 0 : 1);
+        int16_t s2 = (int8_t)regA - (int8_t)mem - ((status & FLAG_C_MASK) ? 0 : 1);
+        if ( s <= 0xFF ) {
+            status |= FLAG_C_MASK;
+        }
+        else
+        {
+            status &= (0xFF - FLAG_C_MASK);
+        }
+        regA = s & 0xFF;
+        updateZStatus(regA);
+        updateNStatus(regA);
+        if ( (s2 < -128) || (s2 > 127) ) {
+            status |= FLAG_V_MASK;
+        }
+        else {
+            status &= (0xFF - FLAG_V_MASK);
+        }
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_INX: {
+        // increment X
+        regX = regX + 1;
+        updateZStatus( regX );
+        updateNStatus( regX );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_INY: {
+        // increment Y
+        regY = regY + 1;
+        updateZStatus( regY );
+        updateNStatus( regY );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_DEX: {
+        // deccrement X
+        regX = regX - 1;
+        updateZStatus( regX );
+        updateNStatus( regX );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_DEY: {
+        // decrement Y
+        regY = regY - 1;
+        updateZStatus( regY );
+        updateNStatus( regY );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_TAX: {
+        // transfer A to X
+        regX = regA;
+        updateZStatus( regX );
+        updateNStatus( regX );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_TAY: {
+        // transfer A to Y
+        regY = regA;
+        updateZStatus( regY );
+        updateNStatus( regY );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_TXA: {
+        // transfer X to A
+        regA = regX;
+        updateZStatus( regA );
+        updateNStatus( regA );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_TYA: {
+        // transfer Y to A
+        regA = regY;
+        updateZStatus( regA );
+        updateNStatus( regA );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_TSX: {
+        // transfer SP to X
+        regX = sp;
+        updateZStatus( regX );
+        updateNStatus( regX );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_TXS: {
+        // transfer X to SP
+        sp = regX;
         break;
     }
     }
