@@ -392,14 +392,14 @@ void InstructionDefinition::initTable()
         case ADDRESSING_ZERO_PAGE:
         case ADDRESSING_ZERO_PAGE_X:
         case ADDRESSING_ZERO_PAGE_Y:
+        case ADDRESSING_INDIRECT_X:
+        case ADDRESSING_INDIRECT_Y:
             table[i].nOperands = 1;
             break;
         case ADDRESSING_INDIRECT:
         case ADDRESSING_ABSOLUTE:
         case ADDRESSING_ABSOLUTE_X:
         case ADDRESSING_ABSOLUTE_Y:
-        case ADDRESSING_INDIRECT_X:
-        case ADDRESSING_INDIRECT_Y:
             table[i].nOperands = 2;
             break;
         }
@@ -490,7 +490,7 @@ std::ostream& operator<<( std::ostream& ostr, const Instruction& instr )
         ostr << "\tzero_page_y";
         break;
     case InstructionDefinition::ADDRESSING_INDIRECT_X:
-        ostr << "\tindirect_x";
+        ostr << "\t($" << std::setw(2) << std::setfill('0') << (instr.operand1+0) << ",X)";
         break;
     case InstructionDefinition::ADDRESSING_INDIRECT_Y:
         ostr << "\tzero_page_y";
@@ -510,7 +510,8 @@ uint16_t CPU::readMem16( uint16_t addr )
 {
     std::cout << "@" << std::setw(4) << std::setfill('0') << addr;
     uint16_t v;
-    memcpy( &v, memory + addr, 2 );
+    v = memory[ addr ];
+    v |= memory[ addr+1 ] << 8;
     std::cout << " => " << v << std::endl;
     return v;
 }
@@ -549,6 +550,13 @@ uint8_t CPU::resolveAddressing( const Instruction& instr )
         break;
     case InstructionDefinition::ADDRESSING_ABSOLUTE:
         return readMem8( instr.operand1 + (instr.operand2 << 8) );
+    case InstructionDefinition::ADDRESSING_INDIRECT_X: {
+        uint8_t pz = instr.operand1 + regX;
+        uint16_t addr = readMem8( pz );
+        pz++; // here is the page 0 wrap
+        addr |= readMem8( pz ) << 8;
+        return readMem8(addr);
+    }   
     default:
         std::cout << "Unsupported addressing" << std::endl;
     }
