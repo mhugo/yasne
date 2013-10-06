@@ -257,10 +257,10 @@ void InstructionDefinition::initTable()
                 adr = ADDRESSING_ZERO_PAGE_X;
                 break;
             case 6:
-                adr = ADDRESSING_ABSOLUTE_X;
+                adr = ADDRESSING_ABSOLUTE_Y;
                 break;
             case 7:
-                adr = ADDRESSING_ABSOLUTE_Y;
+                adr = ADDRESSING_ABSOLUTE_X;
                 break;
             }
             table[i].addressing = adr;
@@ -368,6 +368,9 @@ void InstructionDefinition::initTable()
                 break;
             case 3:
                 adr = ADDRESSING_ABSOLUTE;
+                if ( i == 0x6C ) {
+                    adr = ADDRESSING_INDIRECT;
+                }
                 break;
             case 5:
                 adr = ADDRESSING_ZERO_PAGE_X;
@@ -474,26 +477,32 @@ std::ostream& operator<<( std::ostream& ostr, const Instruction& instr )
         ostr << "\t$" << std::setfill('0') << std::setw(4) << adr;
         break;
     }
-    case InstructionDefinition::ADDRESSING_INDIRECT:
-        ostr << "\tindirect";
+    case InstructionDefinition::ADDRESSING_INDIRECT: {
+        uint16_t adr = (instr.operand2 << 8) + instr.operand1;
+        ostr << "\t($" << std::setfill('0') << std::setw(4) << adr << ")";
         break;
-    case InstructionDefinition::ADDRESSING_ABSOLUTE_X:
-        ostr << "\tabsolute_x";
+    }
+    case InstructionDefinition::ADDRESSING_ABSOLUTE_X: {
+        uint16_t adr = (instr.operand2 << 8) + instr.operand1;
+        ostr << "\t$" << std::setfill('0') << std::setw(4) << adr << ",X";
         break;
-    case InstructionDefinition::ADDRESSING_ABSOLUTE_Y:
-        ostr << "\tabsolute_y";
+    }
+    case InstructionDefinition::ADDRESSING_ABSOLUTE_Y: {
+        uint16_t adr = (instr.operand2 << 8) + instr.operand1;
+        ostr << "\t$" << std::setfill('0') << std::setw(4) << adr << ",Y";
         break;
+    }
     case InstructionDefinition::ADDRESSING_ZERO_PAGE_X:
-        ostr << "\tzero_page_x";
+        ostr << "\tZP$" << std::setfill('0') << std::setw(2) << instr.operand1+0 << ",X";
         break;
     case InstructionDefinition::ADDRESSING_ZERO_PAGE_Y:
-        ostr << "\tzero_page_y";
+        ostr << "\tZP$" << std::setfill('0') << std::setw(2) << instr.operand1+0 << ",Y";
         break;
     case InstructionDefinition::ADDRESSING_INDIRECT_X:
         ostr << "\t($" << std::setw(2) << std::setfill('0') << (instr.operand1+0) << ",X)";
         break;
     case InstructionDefinition::ADDRESSING_INDIRECT_Y:
-        ostr << "\tzero_page_y";
+        ostr << "\t($" << std::setw(2) << std::setfill('0') << (instr.operand1+0) << "),Y";
         break;
     }
     return ostr;
@@ -550,12 +559,34 @@ uint8_t CPU::resolveAddressing( const Instruction& instr )
         break;
     case InstructionDefinition::ADDRESSING_ABSOLUTE:
         return readMem8( instr.operand1 + (instr.operand2 << 8) );
+    case InstructionDefinition::ADDRESSING_ABSOLUTE_X:
+        return readMem8( instr.operand1 + (instr.operand2 << 8) + regX );
+    case InstructionDefinition::ADDRESSING_ABSOLUTE_Y:
+        return readMem8( instr.operand1 + (instr.operand2 << 8) + regY );
     case InstructionDefinition::ADDRESSING_INDIRECT_X: {
         uint8_t pz = instr.operand1 + regX;
         uint16_t addr = readMem8( pz );
         pz++; // here is the page 0 wrap
         addr |= readMem8( pz ) << 8;
         return readMem8(addr);
+    }   
+    case InstructionDefinition::ADDRESSING_INDIRECT_Y: {
+        uint8_t pz = instr.operand1;
+        uint16_t addr = readMem8( pz );
+        pz++; // optional page wrap here
+        addr |= readMem8( pz ) << 8;
+        addr += regY;
+        return readMem8(addr);
+    }   
+    case InstructionDefinition::ADDRESSING_ZERO_PAGE_X: {
+        uint8_t pz = instr.operand1;
+        pz += regX; // wraps around
+        return readMem8(pz);
+    }   
+    case InstructionDefinition::ADDRESSING_ZERO_PAGE_Y: {
+        uint8_t pz = instr.operand1;
+        pz += regX; // wraps around
+        return readMem8(pz);
     }   
     default:
         std::cout << "Unsupported addressing" << std::endl;
@@ -575,6 +606,39 @@ uint16_t CPU::resolveWAddressing( const Instruction& instr )
         uint16_t adr = instr.operand1 + (instr.operand2 << 8);
         return adr;
         break;
+    }
+    case InstructionDefinition::ADDRESSING_ABSOLUTE_X: {
+        uint16_t adr = instr.operand1 + (instr.operand2 << 8) + regX;
+        return adr;
+        break;
+    }
+    case InstructionDefinition::ADDRESSING_ABSOLUTE_Y: {
+        uint16_t adr = instr.operand1 + (instr.operand2 << 8) + regY;
+        return adr;
+        break;
+    }
+    case InstructionDefinition::ADDRESSING_INDIRECT_X: {
+        uint8_t pz = instr.operand1 + regX;
+        uint16_t addr = readMem8( pz );
+        pz++; // here is the page 0 wrap
+        addr |= readMem8( pz ) << 8;
+        return addr;
+    }
+    case InstructionDefinition::ADDRESSING_INDIRECT_Y: {
+        uint8_t pz = instr.operand1;
+        uint16_t addr = readMem8( pz );
+        pz++; // optional page wrap here
+        addr |= readMem8( pz ) << 8;
+        addr += regY;
+        return addr;
+    }   
+    case InstructionDefinition::ADDRESSING_ZERO_PAGE_X: {
+        uint8_t adr = instr.operand1 + regX;
+        return adr;
+    }
+    case InstructionDefinition::ADDRESSING_ZERO_PAGE_Y: {
+        uint8_t adr = instr.operand1 + regY;
+        return adr;
     }
     default:
         std::cout << "Unsupport W addressing " << def.addressing << std::endl;
@@ -654,6 +718,12 @@ void CPU::execute( const Instruction& instr )
     {
     case InstructionDefinition::MNEMONIC_JMP: {
         uint16_t adr = (instr.operand2 << 8) + instr.operand1;
+        if ( def.addressing == InstructionDefinition::ADDRESSING_INDIRECT ) {
+            uint16_t t = adr;
+            // the low byte of the indirect pointer wraps around
+            uint16_t t2 = (t & 0xFF00) | (uint8_t((t&0xff)+1));
+            adr = readMem8( t ) | (readMem8( t2 ) << 8);
+        }
         pc = adr;
         break;
     }
@@ -971,6 +1041,16 @@ void CPU::execute( const Instruction& instr )
         }
         break;
     }
+    case InstructionDefinition::MNEMONIC_INC: {
+        // increment memory
+        uint8_t v = resolveAddressing( instr );
+        v++;
+        uint16_t addr = resolveWAddressing( instr );
+        writeMem8( addr, v );
+        updateZStatus( v );
+        updateNStatus( v );
+        break;
+    }
     case InstructionDefinition::MNEMONIC_INX: {
         // increment X
         regX = regX + 1;
@@ -983,6 +1063,16 @@ void CPU::execute( const Instruction& instr )
         regY = regY + 1;
         updateZStatus( regY );
         updateNStatus( regY );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_DEC: {
+        // decrement memory
+        uint8_t v = resolveAddressing( instr );
+        v--;
+        uint16_t addr = resolveWAddressing( instr );
+        writeMem8( addr, v );
+        updateZStatus( v );
+        updateNStatus( v );
         break;
     }
     case InstructionDefinition::MNEMONIC_DEX: {
