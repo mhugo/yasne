@@ -308,7 +308,8 @@ void InstructionDefinition::initTable()
                 adr = ADDRESSING_ABSOLUTE;
                 break;
             case 5:
-                if ( table[i].mnemonic == MNEMONIC_STX ) {
+                if ( (table[i].mnemonic == MNEMONIC_STX) ||
+                     (table[i].mnemonic == MNEMONIC_LDX) ){
                     adr = ADDRESSING_ZERO_PAGE_Y;
                 }
                 else {
@@ -316,7 +317,8 @@ void InstructionDefinition::initTable()
                 }
                 break;
             case 7:
-                if ( table[i].mnemonic == MNEMONIC_LDX ) {
+                if ( (table[i].mnemonic == MNEMONIC_STX) ||
+                     (table[i].mnemonic == MNEMONIC_LDX) ){
                     adr = ADDRESSING_ABSOLUTE_Y;
                 }
                 else {
@@ -324,6 +326,7 @@ void InstructionDefinition::initTable()
                 }
                 break;
             default:
+                table[i].mnemonic = MNEMONIC_NOP;
                 adr = ADDRESSING_NONE;
                 break;
             }
@@ -333,17 +336,29 @@ void InstructionDefinition::initTable()
             table[i].valid = true;
             switch (aaa) {
             case 0:
-                table[i].valid = false;
+                table[i].mnemonic = MNEMONIC_NOP;
                 break;
             case 1:
-                table[i].mnemonic = MNEMONIC_BIT;
+                if ( (i == 0x24) || (i == 0x2C) ) {
+                    table[i].mnemonic = MNEMONIC_BIT;
+                }
+                else {
+                    table[i].mnemonic = MNEMONIC_NOP;
+                }
                 break;
             case 2:
-                table[i].mnemonic = MNEMONIC_JMP;
-                break;
-            case 3:
                 // JMP abs
                 table[i].mnemonic = MNEMONIC_JMP;
+                if ( bbb != 3 ) {
+                    table[i].mnemonic = MNEMONIC_NOP;
+                }
+                break;
+            case 3:
+                // JMP indirect
+                table[i].mnemonic = MNEMONIC_JMP;
+                if ( bbb != 3 ) {
+                    table[i].mnemonic = MNEMONIC_NOP;
+                }
                 break;
             case 4:
                 table[i].mnemonic = MNEMONIC_STY;
@@ -352,10 +367,20 @@ void InstructionDefinition::initTable()
                 table[i].mnemonic = MNEMONIC_LDY;
                 break;
             case 6:
-                table[i].mnemonic = MNEMONIC_CPY;
+                if ( (i == 0xC0) || (i == 0xC4) || (i == 0xCC)) {
+                    table[i].mnemonic = MNEMONIC_CPY;
+                }
+                else {
+                    table[i].mnemonic = MNEMONIC_NOP;
+                }
                 break;
             case 7:
-                table[i].mnemonic = MNEMONIC_CPX;
+                if ( (i == 0xE0) || (i == 0xE4) || (i == 0xEC)) {
+                    table[i].mnemonic = MNEMONIC_CPX;
+                }
+                else {
+                    table[i].mnemonic = MNEMONIC_NOP;
+                }
                 break;
             }
             Addressing adr;
@@ -585,7 +610,7 @@ uint8_t CPU::resolveAddressing( const Instruction& instr )
     }   
     case InstructionDefinition::ADDRESSING_ZERO_PAGE_Y: {
         uint8_t pz = instr.operand1;
-        pz += regX; // wraps around
+        pz += regY; // wraps around
         return readMem8(pz);
     }   
     default:
@@ -713,6 +738,10 @@ void CPU::updateNStatus( uint8_t v )
 void CPU::execute( const Instruction& instr )
 {
     InstructionDefinition def = InstructionDefinition::table()[ instr.opcode ];
+
+    if ( !def.valid ) {
+        std::cout << "ILLEGAL instruction !" << std::endl;
+    }
 
     switch ( def.mnemonic )
     {

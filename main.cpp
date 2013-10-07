@@ -44,7 +44,7 @@ int main( int argc, char *argv[] )
     cpu.regY = 0;
     cpu.memory = memory;
 
-    memory[0x180] = 0x33;
+    //    memory[0x180] = 0x33;
 
     // compare to log file
     std::ifstream logFile( logFilePath.c_str() );
