@@ -66,11 +66,20 @@ struct InstructionDefinition
         MNEMONIC_STY,
         MNEMONIC_LDY,
         MNEMONIC_CPY,
-        MNEMONIC_CPX
+        MNEMONIC_CPX,
+        // unofficial
+        MNEMONIC_LAX,
+        MNEMONIC_SAX,
+        MNEMONIC_DCP,
+        MNEMONIC_ISC,
+        MNEMONIC_RLA,
+        MNEMONIC_RRA,
+        MNEMONIC_SLO,
+        MNEMONIC_SRE
     };
     Mnemonic mnemonic;
 
-    static const char * MnemonicString[56];
+    static const char * MnemonicString[];
 
     // addressing mode
     enum Addressing

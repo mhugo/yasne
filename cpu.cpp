@@ -6,7 +6,7 @@
 
 #include "cpu.hpp"
 
-const char * InstructionDefinition::MnemonicString[56] = 
+const char * InstructionDefinition::MnemonicString[] = 
 {
     "PHP",
     "CLC",
@@ -63,7 +63,15 @@ const char * InstructionDefinition::MnemonicString[56] =
     "STY",
     "LDY",
     "CPY",
-    "CPX"
+    "CPX",
+    "LAX",
+    "SAX",
+    "DCP",
+    "ISC",
+    "RLA",
+    "RRA",
+    "SLO",
+    "SRE"
 };
 
 void InstructionDefinition::initTable()
@@ -150,6 +158,108 @@ void InstructionDefinition::initTable()
             break;
         case 0xEA:
             table[i].mnemonic = MNEMONIC_NOP;
+            break;
+
+            // unofficial codes
+        case 0xA3:
+            table[i].mnemonic = MNEMONIC_LAX;
+            table[i].addressing = ADDRESSING_INDIRECT_X;
+            break;
+        case 0xB3:
+            table[i].mnemonic = MNEMONIC_LAX;
+            table[i].addressing = ADDRESSING_INDIRECT_Y;
+            break;
+        case 0xA7:
+            table[i].mnemonic = MNEMONIC_LAX;
+            table[i].addressing = ADDRESSING_ZERO_PAGE;
+            break;
+        case 0xB7:
+            table[i].mnemonic = MNEMONIC_LAX;
+            table[i].addressing = ADDRESSING_ZERO_PAGE_Y;
+            break;
+        case 0xAF:
+            table[i].mnemonic = MNEMONIC_LAX;
+            table[i].addressing = ADDRESSING_ABSOLUTE;
+            break;
+        case 0xBF:
+            table[i].mnemonic = MNEMONIC_LAX;
+            table[i].addressing = ADDRESSING_ABSOLUTE_Y;
+            break;
+        case 0x83:
+            table[i].mnemonic = MNEMONIC_SAX;
+            table[i].addressing = ADDRESSING_INDIRECT_X;
+            break;
+        case 0x87:
+            table[i].mnemonic = MNEMONIC_SAX;
+            table[i].addressing = ADDRESSING_ZERO_PAGE;
+            break;
+        case 0x8F:
+            table[i].mnemonic = MNEMONIC_SAX;
+            table[i].addressing = ADDRESSING_ABSOLUTE;
+            break;
+        case 0x97:
+            table[i].mnemonic = MNEMONIC_SAX;
+            table[i].addressing = ADDRESSING_ZERO_PAGE_Y;
+            break;
+        case 0xEB:
+            table[i].mnemonic = MNEMONIC_SBC;
+            table[i].addressing = ADDRESSING_IMMEDIATE;
+            break;
+        case 0xC3:
+            table[i].mnemonic = MNEMONIC_DCP;
+            table[i].addressing = ADDRESSING_INDIRECT_X;
+            break;
+        case 0xC7:
+            table[i].mnemonic = MNEMONIC_DCP;
+            table[i].addressing = ADDRESSING_ZERO_PAGE;
+            break;
+        case 0xCF:
+            table[i].mnemonic = MNEMONIC_DCP;
+            table[i].addressing = ADDRESSING_ABSOLUTE;
+            break;
+        case 0xD3:
+            table[i].mnemonic = MNEMONIC_DCP;
+            table[i].addressing = ADDRESSING_INDIRECT_Y;
+            break;
+        case 0xD7:
+            table[i].mnemonic = MNEMONIC_DCP;
+            table[i].addressing = ADDRESSING_ZERO_PAGE_X;
+            break;
+        case 0xDB:
+            table[i].mnemonic = MNEMONIC_DCP;
+            table[i].addressing = ADDRESSING_ABSOLUTE_Y;
+            break;
+        case 0xDF:
+            table[i].mnemonic = MNEMONIC_DCP;
+            table[i].addressing = ADDRESSING_ABSOLUTE_X;
+            break;
+        case 0xE3:
+            table[i].mnemonic = MNEMONIC_ISC;
+            table[i].addressing = ADDRESSING_INDIRECT_X;
+            break;
+        case 0xE7:
+            table[i].mnemonic = MNEMONIC_ISC;
+            table[i].addressing = ADDRESSING_ZERO_PAGE;
+            break;
+        case 0xEF:
+            table[i].mnemonic = MNEMONIC_ISC;
+            table[i].addressing = ADDRESSING_ABSOLUTE;
+            break;
+        case 0xF3:
+            table[i].mnemonic = MNEMONIC_ISC;
+            table[i].addressing = ADDRESSING_INDIRECT_Y;
+            break;
+        case 0xF7:
+            table[i].mnemonic = MNEMONIC_ISC;
+            table[i].addressing = ADDRESSING_ZERO_PAGE_X;
+            break;
+        case 0xFB:
+            table[i].mnemonic = MNEMONIC_ISC;
+            table[i].addressing = ADDRESSING_ABSOLUTE_Y;
+            break;
+        case 0xFF:
+            table[i].mnemonic = MNEMONIC_ISC;
+            table[i].addressing = ADDRESSING_ABSOLUTE_X;
             break;
         default:
             table[i].valid = false;
@@ -1264,6 +1374,41 @@ void CPU::execute( const Instruction& instr )
         }
         updateNStatus( v );
         updateZStatus( v );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_LAX: {
+        // LDX then TXA ??
+        uint8_t src = resolveAddressing( instr );
+        regA = regX = src;
+        updateStatus( regA );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_SAX: {
+        // store A and X
+        uint16_t target = resolveWAddressing( instr );
+        writeMem8( target, regA & regX );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_DCP: {
+        // DEC then CMP
+        uint16_t mem = resolveWAddressing( instr );
+        uint8_t s = readMem8( mem );
+        s--;
+        writeMem8( mem, s );
+        int16_t d = regA - s;
+        if ( d >= 0 ) {
+            status |= FLAG_C_MASK;
+        }
+        else
+        {
+            status &= (0xFF - FLAG_C_MASK);
+        }
+        updateZStatus(d);
+        updateNStatus(d);
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_ISC: {
+        // INC then SBC
         break;
     }
     }
