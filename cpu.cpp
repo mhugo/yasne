@@ -74,451 +74,289 @@ const char * InstructionDefinition::MnemonicString[] =
     "SRE"
 };
 
+const char * AddressingString[] = 
+{
+    "NONE",
+    "IMMEDIATE",
+    "ZERO_PAGE",
+    "ACCUMULATOR",
+    "ABSOLUTE",
+    "RELATIVE",
+    "INDIRECT",
+    "ABSOLUTE_X",
+    "ABSOLUTE_Y",
+    "ZERO_PAGE_X",
+    "ZERO_PAGE_Y",
+    "INDIRECT_X",
+    "INDIRECT_Y"
+};
+
 void InstructionDefinition::initTable()
 {
     InstructionDefinition* table = InstructionDefinition::table();
 
+#define DEF_INSTRUCTION( opcode, mnemonic, addressing ) table[opcode] = InstructionDefinition( opcode, mnemonic, addressing, 0 )
+
+    DEF_INSTRUCTION(0x00, MNEMONIC_BRK, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x01, MNEMONIC_ORA, ADDRESSING_INDIRECT_X);
+    DEF_INSTRUCTION(0x02, MNEMONIC_ASL, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0x03, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x04, MNEMONIC_NOP, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0x05, MNEMONIC_ORA, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0x06, MNEMONIC_ASL, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0x07, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x08, MNEMONIC_PHP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x09, MNEMONIC_ORA, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0x0a, MNEMONIC_ASL, ADDRESSING_ACCUMULATOR);
+    DEF_INSTRUCTION(0x0b, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x0c, MNEMONIC_NOP, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0x0d, MNEMONIC_ORA, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0x0e, MNEMONIC_ASL, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0x0f, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x10, MNEMONIC_BPL, ADDRESSING_RELATIVE);
+    DEF_INSTRUCTION(0x11, MNEMONIC_ORA, ADDRESSING_INDIRECT_Y);
+    DEF_INSTRUCTION(0x12, MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x13, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x14, MNEMONIC_NOP, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0x15, MNEMONIC_ORA, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0x16, MNEMONIC_ASL, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0x17, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x18, MNEMONIC_CLC, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x19, MNEMONIC_ORA, ADDRESSING_ABSOLUTE_Y);
+    DEF_INSTRUCTION(0x1a, MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x1b, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x1c, MNEMONIC_NOP, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0x1d, MNEMONIC_ORA, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0x1e, MNEMONIC_ASL, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0x1f, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x20, MNEMONIC_JSR, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0x21, MNEMONIC_AND, ADDRESSING_INDIRECT_X);
+    DEF_INSTRUCTION(0x22, MNEMONIC_ROL, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0x23, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x24, MNEMONIC_BIT, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0x25, MNEMONIC_AND, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0x26, MNEMONIC_ROL, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0x27, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x28, MNEMONIC_PLP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x29, MNEMONIC_AND, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0x2a, MNEMONIC_ROL, ADDRESSING_ACCUMULATOR);
+    DEF_INSTRUCTION(0x2b, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x2c, MNEMONIC_BIT, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0x2d, MNEMONIC_AND, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0x2e, MNEMONIC_ROL, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0x2f, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x30, MNEMONIC_BMI, ADDRESSING_RELATIVE);
+    DEF_INSTRUCTION(0x31, MNEMONIC_AND, ADDRESSING_INDIRECT_Y);
+    DEF_INSTRUCTION(0x32, MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x33, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x34, MNEMONIC_NOP, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0x35, MNEMONIC_AND, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0x36, MNEMONIC_ROL, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0x37, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x38, MNEMONIC_SEC, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x39, MNEMONIC_AND, ADDRESSING_ABSOLUTE_Y);
+    DEF_INSTRUCTION(0x3a, MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x3b, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x3c, MNEMONIC_NOP, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0x3d, MNEMONIC_AND, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0x3e, MNEMONIC_ROL, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0x3f, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x40, MNEMONIC_RTI, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x41, MNEMONIC_EOR, ADDRESSING_INDIRECT_X);
+    DEF_INSTRUCTION(0x42, MNEMONIC_LSR, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0x43, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x44, MNEMONIC_NOP, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0x45, MNEMONIC_EOR, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0x46, MNEMONIC_LSR, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0x47, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x48, MNEMONIC_PHA, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x49, MNEMONIC_EOR, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0x4a, MNEMONIC_LSR, ADDRESSING_ACCUMULATOR);
+    DEF_INSTRUCTION(0x4b, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x4c, MNEMONIC_JMP, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0x4d, MNEMONIC_EOR, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0x4e, MNEMONIC_LSR, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0x4f, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x50, MNEMONIC_BVC, ADDRESSING_RELATIVE);
+    DEF_INSTRUCTION(0x51, MNEMONIC_EOR, ADDRESSING_INDIRECT_Y);
+    DEF_INSTRUCTION(0x52, MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x53, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x54, MNEMONIC_NOP, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0x55, MNEMONIC_EOR, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0x56, MNEMONIC_LSR, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0x57, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x58, MNEMONIC_CLI, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x59, MNEMONIC_EOR, ADDRESSING_ABSOLUTE_Y);
+    DEF_INSTRUCTION(0x5a, MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x5b, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x5c, MNEMONIC_NOP, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0x5d, MNEMONIC_EOR, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0x5e, MNEMONIC_LSR, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0x5f, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x60, MNEMONIC_RTS, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x61, MNEMONIC_ADC, ADDRESSING_INDIRECT_X);
+    DEF_INSTRUCTION(0x62, MNEMONIC_ROR, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0x63, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x64, MNEMONIC_NOP, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0x65, MNEMONIC_ADC, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0x66, MNEMONIC_ROR, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0x67, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x68, MNEMONIC_PLA, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x69, MNEMONIC_ADC, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0x6a, MNEMONIC_ROR, ADDRESSING_ACCUMULATOR);
+    DEF_INSTRUCTION(0x6b, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x6c, MNEMONIC_JMP, ADDRESSING_INDIRECT);
+    DEF_INSTRUCTION(0x6d, MNEMONIC_ADC, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0x6e, MNEMONIC_ROR, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0x6f, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x70, MNEMONIC_BVS, ADDRESSING_RELATIVE);
+    DEF_INSTRUCTION(0x71, MNEMONIC_ADC, ADDRESSING_INDIRECT_Y);
+    DEF_INSTRUCTION(0x72, MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x73, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x74, MNEMONIC_NOP, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0x75, MNEMONIC_ADC, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0x76, MNEMONIC_ROR, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0x77, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x78, MNEMONIC_SEI, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x79, MNEMONIC_ADC, ADDRESSING_ABSOLUTE_Y);
+    DEF_INSTRUCTION(0x7a, MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x7b, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x7c, MNEMONIC_NOP, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0x7d, MNEMONIC_ADC, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0x7e, MNEMONIC_ROR, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0x7f, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x80, MNEMONIC_STY, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0x81, MNEMONIC_STA, ADDRESSING_INDIRECT_X);
+    DEF_INSTRUCTION(0x82, MNEMONIC_STX, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0x83, MNEMONIC_SAX, ADDRESSING_INDIRECT_X);
+    DEF_INSTRUCTION(0x84, MNEMONIC_STY, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0x85, MNEMONIC_STA, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0x86, MNEMONIC_STX, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0x87, MNEMONIC_SAX, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0x88, MNEMONIC_DEY, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x89, MNEMONIC_STA, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0x8a, MNEMONIC_TXA, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x8b, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x8c, MNEMONIC_STY, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0x8d, MNEMONIC_STA, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0x8e, MNEMONIC_STX, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0x8f, MNEMONIC_SAX, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0x90, MNEMONIC_BCC, ADDRESSING_RELATIVE);
+    DEF_INSTRUCTION(0x91, MNEMONIC_STA, ADDRESSING_INDIRECT_Y);
+    DEF_INSTRUCTION(0x92, MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x93, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x94, MNEMONIC_STY, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0x95, MNEMONIC_STA, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0x96, MNEMONIC_STX, ADDRESSING_ZERO_PAGE_Y);
+    DEF_INSTRUCTION(0x97, MNEMONIC_SAX, ADDRESSING_ZERO_PAGE_Y);
+    DEF_INSTRUCTION(0x98, MNEMONIC_TYA, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x99, MNEMONIC_STA, ADDRESSING_ABSOLUTE_Y);
+    DEF_INSTRUCTION(0x9a, MNEMONIC_TXS, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x9b, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x9c, MNEMONIC_STY, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0x9d, MNEMONIC_STA, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0x9e, MNEMONIC_STX, ADDRESSING_ABSOLUTE_Y);
+    DEF_INSTRUCTION(0x9f, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xa0, MNEMONIC_LDY, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0xa1, MNEMONIC_LDA, ADDRESSING_INDIRECT_X);
+    DEF_INSTRUCTION(0xa2, MNEMONIC_LDX, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0xa3, MNEMONIC_LAX, ADDRESSING_INDIRECT_X);
+    DEF_INSTRUCTION(0xa4, MNEMONIC_LDY, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0xa5, MNEMONIC_LDA, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0xa6, MNEMONIC_LDX, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0xa7, MNEMONIC_LAX, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0xa8, MNEMONIC_TAY, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xa9, MNEMONIC_LDA, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0xaa, MNEMONIC_TAX, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xab, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xac, MNEMONIC_LDY, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0xad, MNEMONIC_LDA, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0xae, MNEMONIC_LDX, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0xaf, MNEMONIC_LAX, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0xb0, MNEMONIC_BCS, ADDRESSING_RELATIVE);
+    DEF_INSTRUCTION(0xb1, MNEMONIC_LDA, ADDRESSING_INDIRECT_Y);
+    DEF_INSTRUCTION(0xb2, MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xb3, MNEMONIC_LAX, ADDRESSING_INDIRECT_Y);
+    DEF_INSTRUCTION(0xb4, MNEMONIC_LDY, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0xb5, MNEMONIC_LDA, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0xb6, MNEMONIC_LDX, ADDRESSING_ZERO_PAGE_Y);
+    DEF_INSTRUCTION(0xb7, MNEMONIC_LAX, ADDRESSING_ZERO_PAGE_Y);
+    DEF_INSTRUCTION(0xb8, MNEMONIC_CLV, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xb9, MNEMONIC_LDA, ADDRESSING_ABSOLUTE_Y);
+    DEF_INSTRUCTION(0xba, MNEMONIC_TSX, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xbb, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xbc, MNEMONIC_LDY, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0xbd, MNEMONIC_LDA, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0xbe, MNEMONIC_LDX, ADDRESSING_ABSOLUTE_Y);
+    DEF_INSTRUCTION(0xbf, MNEMONIC_LAX, ADDRESSING_ABSOLUTE_Y);
+    DEF_INSTRUCTION(0xc0, MNEMONIC_CPY, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0xc1, MNEMONIC_CMP, ADDRESSING_INDIRECT_X);
+    DEF_INSTRUCTION(0xc2, MNEMONIC_DEC, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0xc3, MNEMONIC_DCP, ADDRESSING_INDIRECT_X);
+    DEF_INSTRUCTION(0xc4, MNEMONIC_CPY, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0xc5, MNEMONIC_CMP, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0xc6, MNEMONIC_DEC, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0xc7, MNEMONIC_DCP, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0xc8, MNEMONIC_INY, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xc9, MNEMONIC_CMP, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0xca, MNEMONIC_DEX, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xcb, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xcc, MNEMONIC_CPY, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0xcd, MNEMONIC_CMP, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0xce, MNEMONIC_DEC, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0xcf, MNEMONIC_DCP, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0xd0, MNEMONIC_BNE, ADDRESSING_RELATIVE);
+    DEF_INSTRUCTION(0xd1, MNEMONIC_CMP, ADDRESSING_INDIRECT_Y);
+    DEF_INSTRUCTION(0xd2, MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xd3, MNEMONIC_DCP, ADDRESSING_INDIRECT_Y);
+    DEF_INSTRUCTION(0xd4, MNEMONIC_NOP, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0xd5, MNEMONIC_CMP, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0xd6, MNEMONIC_DEC, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0xd7, MNEMONIC_DCP, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0xd8, MNEMONIC_CLD, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xd9, MNEMONIC_CMP, ADDRESSING_ABSOLUTE_Y);
+    DEF_INSTRUCTION(0xda, MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xdb, MNEMONIC_DCP, ADDRESSING_ABSOLUTE_Y);
+    DEF_INSTRUCTION(0xdc, MNEMONIC_NOP, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0xdd, MNEMONIC_CMP, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0xde, MNEMONIC_DEC, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0xdf, MNEMONIC_DCP, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0xe0, MNEMONIC_CPX, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0xe1, MNEMONIC_SBC, ADDRESSING_INDIRECT_X);
+    DEF_INSTRUCTION(0xe2, MNEMONIC_INC, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0xe3, MNEMONIC_ISC, ADDRESSING_INDIRECT_X);
+    DEF_INSTRUCTION(0xe4, MNEMONIC_CPX, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0xe5, MNEMONIC_SBC, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0xe6, MNEMONIC_INC, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0xe7, MNEMONIC_ISC, ADDRESSING_ZERO_PAGE);
+    DEF_INSTRUCTION(0xe8, MNEMONIC_INX, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xe9, MNEMONIC_SBC, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0xea, MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xeb, MNEMONIC_SBC, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0xec, MNEMONIC_CPX, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0xed, MNEMONIC_SBC, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0xee, MNEMONIC_INC, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0xef, MNEMONIC_ISC, ADDRESSING_ABSOLUTE);
+    DEF_INSTRUCTION(0xf0, MNEMONIC_BEQ, ADDRESSING_RELATIVE);
+    DEF_INSTRUCTION(0xf1, MNEMONIC_SBC, ADDRESSING_INDIRECT_Y);
+    DEF_INSTRUCTION(0xf2, MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xf3, MNEMONIC_ISC, ADDRESSING_INDIRECT_Y);
+    DEF_INSTRUCTION(0xf4, MNEMONIC_NOP, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0xf5, MNEMONIC_SBC, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0xf6, MNEMONIC_INC, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0xf7, MNEMONIC_ISC, ADDRESSING_ZERO_PAGE_X);
+    DEF_INSTRUCTION(0xf8, MNEMONIC_SED, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xf9, MNEMONIC_SBC, ADDRESSING_ABSOLUTE_Y);
+    DEF_INSTRUCTION(0xfa, MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xfb, MNEMONIC_ISC, ADDRESSING_ABSOLUTE_Y);
+    DEF_INSTRUCTION(0xfc, MNEMONIC_NOP, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0xfd, MNEMONIC_SBC, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0xfe, MNEMONIC_INC, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0xff, MNEMONIC_ISC, ADDRESSING_ABSOLUTE_X);
+
+#undef DEF_INSTRUCTION
+
     for ( int i = 0; i < 256; i++ ) {
-        table[i].opcode = i;
-
-        // opcode = aaabbbcc
-        int cc = i & 3;
-        int aaa = i >> 5;
-        int bbb = (i >> 2) & 7;
-
-        std::cout << std::hex << i << " " << (i & 0x0F) << " cc = " << cc << " aaa = " << aaa << " bbb = " << bbb << std::dec << std::endl;
-        // else
-
-        table[i].valid = true;
-        table[i].addressing = ADDRESSING_NONE;
-        switch (i)
-        {
-        case 0x08:
-            table[i].mnemonic = MNEMONIC_PHP;
-            break;
-        case 0x18:
-            table[i].mnemonic = MNEMONIC_CLC;
-            break;
-        case 0x28:
-            table[i].mnemonic = MNEMONIC_PLP;
-            break;
-        case 0x38:
-            table[i].mnemonic = MNEMONIC_SEC;
-            break;
-        case 0x48:
-            table[i].mnemonic = MNEMONIC_PHA;
-            break;
-        case 0x58:
-            table[i].mnemonic = MNEMONIC_CLI;
-            break;
-        case 0x68:
-            table[i].mnemonic = MNEMONIC_PLA;
-            break;
-        case 0x78:
-            table[i].mnemonic = MNEMONIC_SEI;
-            break;
-        case 0x88:
-            table[i].mnemonic = MNEMONIC_DEY;
-            break;
-        case 0x98:
-            table[i].mnemonic = MNEMONIC_TYA;
-            break;
-        case 0xA8:
-            table[i].mnemonic = MNEMONIC_TAY;
-            break;
-        case 0xB8:
-            table[i].mnemonic = MNEMONIC_CLV;
-            break;
-        case 0xC8:
-            table[i].mnemonic = MNEMONIC_INY;
-            break;
-        case 0xD8:
-            table[i].mnemonic = MNEMONIC_CLD;
-            break;
-        case 0xE8:
-            table[i].mnemonic = MNEMONIC_INX;
-            break;
-        case 0xF8:
-            table[i].mnemonic = MNEMONIC_SED;
-            break;
-        case 0x8A:
-            table[i].mnemonic = MNEMONIC_TXA;
-            break;
-        case 0x9A:
-            table[i].mnemonic = MNEMONIC_TXS;
-            break;
-        case 0xAA:
-            table[i].mnemonic = MNEMONIC_TAX;
-            break;
-        case 0xBA:
-            table[i].mnemonic = MNEMONIC_TSX;
-            break;
-        case 0xCA:
-            table[i].mnemonic = MNEMONIC_DEX;
-            break;
-        case 0xEA:
-            table[i].mnemonic = MNEMONIC_NOP;
-            break;
-
-            // unofficial codes
-        case 0xA3:
-            table[i].mnemonic = MNEMONIC_LAX;
-            table[i].addressing = ADDRESSING_INDIRECT_X;
-            break;
-        case 0xB3:
-            table[i].mnemonic = MNEMONIC_LAX;
-            table[i].addressing = ADDRESSING_INDIRECT_Y;
-            break;
-        case 0xA7:
-            table[i].mnemonic = MNEMONIC_LAX;
-            table[i].addressing = ADDRESSING_ZERO_PAGE;
-            break;
-        case 0xB7:
-            table[i].mnemonic = MNEMONIC_LAX;
-            table[i].addressing = ADDRESSING_ZERO_PAGE_Y;
-            break;
-        case 0xAF:
-            table[i].mnemonic = MNEMONIC_LAX;
-            table[i].addressing = ADDRESSING_ABSOLUTE;
-            break;
-        case 0xBF:
-            table[i].mnemonic = MNEMONIC_LAX;
-            table[i].addressing = ADDRESSING_ABSOLUTE_Y;
-            break;
-        case 0x83:
-            table[i].mnemonic = MNEMONIC_SAX;
-            table[i].addressing = ADDRESSING_INDIRECT_X;
-            break;
-        case 0x87:
-            table[i].mnemonic = MNEMONIC_SAX;
-            table[i].addressing = ADDRESSING_ZERO_PAGE;
-            break;
-        case 0x8F:
-            table[i].mnemonic = MNEMONIC_SAX;
-            table[i].addressing = ADDRESSING_ABSOLUTE;
-            break;
-        case 0x97:
-            table[i].mnemonic = MNEMONIC_SAX;
-            table[i].addressing = ADDRESSING_ZERO_PAGE_Y;
-            break;
-        case 0xEB:
-            table[i].mnemonic = MNEMONIC_SBC;
-            table[i].addressing = ADDRESSING_IMMEDIATE;
-            break;
-        case 0xC3:
-            table[i].mnemonic = MNEMONIC_DCP;
-            table[i].addressing = ADDRESSING_INDIRECT_X;
-            break;
-        case 0xC7:
-            table[i].mnemonic = MNEMONIC_DCP;
-            table[i].addressing = ADDRESSING_ZERO_PAGE;
-            break;
-        case 0xCF:
-            table[i].mnemonic = MNEMONIC_DCP;
-            table[i].addressing = ADDRESSING_ABSOLUTE;
-            break;
-        case 0xD3:
-            table[i].mnemonic = MNEMONIC_DCP;
-            table[i].addressing = ADDRESSING_INDIRECT_Y;
-            break;
-        case 0xD7:
-            table[i].mnemonic = MNEMONIC_DCP;
-            table[i].addressing = ADDRESSING_ZERO_PAGE_X;
-            break;
-        case 0xDB:
-            table[i].mnemonic = MNEMONIC_DCP;
-            table[i].addressing = ADDRESSING_ABSOLUTE_Y;
-            break;
-        case 0xDF:
-            table[i].mnemonic = MNEMONIC_DCP;
-            table[i].addressing = ADDRESSING_ABSOLUTE_X;
-            break;
-        case 0xE3:
-            table[i].mnemonic = MNEMONIC_ISC;
-            table[i].addressing = ADDRESSING_INDIRECT_X;
-            break;
-        case 0xE7:
-            table[i].mnemonic = MNEMONIC_ISC;
-            table[i].addressing = ADDRESSING_ZERO_PAGE;
-            break;
-        case 0xEF:
-            table[i].mnemonic = MNEMONIC_ISC;
-            table[i].addressing = ADDRESSING_ABSOLUTE;
-            break;
-        case 0xF3:
-            table[i].mnemonic = MNEMONIC_ISC;
-            table[i].addressing = ADDRESSING_INDIRECT_Y;
-            break;
-        case 0xF7:
-            table[i].mnemonic = MNEMONIC_ISC;
-            table[i].addressing = ADDRESSING_ZERO_PAGE_X;
-            break;
-        case 0xFB:
-            table[i].mnemonic = MNEMONIC_ISC;
-            table[i].addressing = ADDRESSING_ABSOLUTE_Y;
-            break;
-        case 0xFF:
-            table[i].mnemonic = MNEMONIC_ISC;
-            table[i].addressing = ADDRESSING_ABSOLUTE_X;
-            break;
-        default:
-            table[i].valid = false;
-        }
-
-        if ( !table[i].valid && (i & 0x0F) == 0 ) { // branching instructions
-            table[i].valid = true;
-            int xx = i >> 4;
-            std::cout << std::hex << xx << std::endl;
-            table[i].addressing = ADDRESSING_RELATIVE;
-            switch (xx) {
-            case 0:
-                table[i].mnemonic = MNEMONIC_BRK;
-                table[i].addressing = ADDRESSING_NONE;
-                break;
-            case 1:
-                table[i].mnemonic = MNEMONIC_BPL;
-                break;
-            case 2:
-                // JSR abs
-                table[i].mnemonic = MNEMONIC_JSR;
-                table[i].addressing = ADDRESSING_ABSOLUTE;
-                break;
-            case 3:
-                // JMP abs
-                table[i].mnemonic = MNEMONIC_BMI;
-                break;
-            case 4:
-                table[i].mnemonic = MNEMONIC_RTI;
-                table[i].addressing = ADDRESSING_NONE;
-                break;
-            case 5:
-                table[i].mnemonic = MNEMONIC_BVC;
-                break;
-            case 6:
-                table[i].mnemonic = MNEMONIC_RTS;
-                table[i].addressing = ADDRESSING_NONE;
-                break;
-            case 7:
-                table[i].mnemonic = MNEMONIC_BVS;
-                break;
-            case 9:
-                table[i].mnemonic = MNEMONIC_BCC;
-                break;
-            case 0xb:
-                table[i].mnemonic = MNEMONIC_BCS;
-                break;
-            case 0xd:
-                table[i].mnemonic = MNEMONIC_BNE;
-                break;
-            case 0xf:
-                table[i].mnemonic = MNEMONIC_BEQ;
-                break;
-            default:
-                table[i].valid = false;
-            }
-        }
-        else if ( !table[i].valid && cc == 1 ) {
-            table[i].valid = true;
-            switch (aaa) {
-            case 0:
-                table[i].mnemonic = MNEMONIC_ORA;
-                break;
-            case 1:
-                table[i].mnemonic = MNEMONIC_AND;
-                break;
-            case 2:
-                table[i].mnemonic = MNEMONIC_EOR;
-                break;
-            case 3:
-                table[i].mnemonic = MNEMONIC_ADC;
-                break;
-            case 4:
-                table[i].mnemonic = MNEMONIC_STA;
-                break;
-            case 5:
-                table[i].mnemonic = MNEMONIC_LDA;
-                break;
-            case 6:
-                table[i].mnemonic = MNEMONIC_CMP;
-                break;
-            case 7:
-                table[i].mnemonic = MNEMONIC_SBC;
-                break;
-            }
-
-            Addressing adr;
-            switch ( bbb ) {
-            case 0:
-                adr = ADDRESSING_INDIRECT_X;
-                break;
-            case 1:
-                adr = ADDRESSING_ZERO_PAGE;
-                break;
-            case 2:
-                adr = ADDRESSING_IMMEDIATE;
-                break;
-            case 3:
-                adr = ADDRESSING_ABSOLUTE;
-                break;
-            case 4:
-                adr = ADDRESSING_INDIRECT_Y;
-                break;
-            case 5:
-                adr = ADDRESSING_ZERO_PAGE_X;
-                break;
-            case 6:
-                adr = ADDRESSING_ABSOLUTE_Y;
-                break;
-            case 7:
-                adr = ADDRESSING_ABSOLUTE_X;
-                break;
-            }
-            table[i].addressing = adr;
-        }
-        else if ( !table[i].valid && cc == 2 ) {
-            table[i].valid = true;
-            switch (aaa) {
-            case 0:
-                table[i].mnemonic = MNEMONIC_ASL;
-                break;
-            case 1:
-                table[i].mnemonic = MNEMONIC_ROL;
-                break;
-            case 2:
-                table[i].mnemonic = MNEMONIC_LSR;
-                break;
-            case 3:
-                table[i].mnemonic = MNEMONIC_ROR;
-                break;
-            case 4:
-                table[i].mnemonic = MNEMONIC_STX;
-                break;
-            case 5:
-                table[i].mnemonic = MNEMONIC_LDX;
-                break;
-            case 6:
-                table[i].mnemonic = MNEMONIC_DEC;
-                break;
-            case 7:
-                table[i].mnemonic = MNEMONIC_INC;
-                break;
-            }
-            Addressing adr;
-            switch ( bbb ) {
-            case 0:
-                adr = ADDRESSING_IMMEDIATE;
-                break;
-            case 1:
-                adr = ADDRESSING_ZERO_PAGE;
-                break;
-            case 2:
-                adr = ADDRESSING_ACCUMULATOR;
-                break;
-            case 3:
-                adr = ADDRESSING_ABSOLUTE;
-                break;
-            case 5:
-                if ( (table[i].mnemonic == MNEMONIC_STX) ||
-                     (table[i].mnemonic == MNEMONIC_LDX) ){
-                    adr = ADDRESSING_ZERO_PAGE_Y;
-                }
-                else {
-                    adr = ADDRESSING_ZERO_PAGE_X;
-                }
-                break;
-            case 7:
-                if ( (table[i].mnemonic == MNEMONIC_STX) ||
-                     (table[i].mnemonic == MNEMONIC_LDX) ){
-                    adr = ADDRESSING_ABSOLUTE_Y;
-                }
-                else {
-                    adr = ADDRESSING_ABSOLUTE_X;
-                }
-                break;
-            default:
-                table[i].mnemonic = MNEMONIC_NOP;
-                adr = ADDRESSING_NONE;
-                break;
-            }
-            table[i].addressing = adr;
-        }
-        if ( !table[i].valid && cc == 0 ) {
-            table[i].valid = true;
-            switch (aaa) {
-            case 0:
-                table[i].mnemonic = MNEMONIC_NOP;
-                break;
-            case 1:
-                if ( (i == 0x24) || (i == 0x2C) ) {
-                    table[i].mnemonic = MNEMONIC_BIT;
-                }
-                else {
-                    table[i].mnemonic = MNEMONIC_NOP;
-                }
-                break;
-            case 2:
-                // JMP abs
-                table[i].mnemonic = MNEMONIC_JMP;
-                if ( bbb != 3 ) {
-                    table[i].mnemonic = MNEMONIC_NOP;
-                }
-                break;
-            case 3:
-                // JMP indirect
-                table[i].mnemonic = MNEMONIC_JMP;
-                if ( bbb != 3 ) {
-                    table[i].mnemonic = MNEMONIC_NOP;
-                }
-                break;
-            case 4:
-                table[i].mnemonic = MNEMONIC_STY;
-                break;
-            case 5:
-                table[i].mnemonic = MNEMONIC_LDY;
-                break;
-            case 6:
-                if ( (i == 0xC0) || (i == 0xC4) || (i == 0xCC)) {
-                    table[i].mnemonic = MNEMONIC_CPY;
-                }
-                else {
-                    table[i].mnemonic = MNEMONIC_NOP;
-                }
-                break;
-            case 7:
-                if ( (i == 0xE0) || (i == 0xE4) || (i == 0xEC)) {
-                    table[i].mnemonic = MNEMONIC_CPX;
-                }
-                else {
-                    table[i].mnemonic = MNEMONIC_NOP;
-                }
-                break;
-            }
-            Addressing adr;
-            switch ( bbb ) {
-            case 0:
-                adr = ADDRESSING_IMMEDIATE;
-                break;
-            case 1:
-                adr = ADDRESSING_ZERO_PAGE;
-                break;
-            case 3:
-                adr = ADDRESSING_ABSOLUTE;
-                if ( i == 0x6C ) {
-                    adr = ADDRESSING_INDIRECT;
-                }
-                break;
-            case 5:
-                adr = ADDRESSING_ZERO_PAGE_X;
-                break;
-            case 7:
-                adr = ADDRESSING_ABSOLUTE_X;
-                break;
-            default:
-                adr = ADDRESSING_NONE;
-            }
-            table[i].addressing = adr;
-        }
-        
         switch ( table[i].addressing )
         {
         case ADDRESSING_NONE:
@@ -540,9 +378,6 @@ void InstructionDefinition::initTable()
         case ADDRESSING_ABSOLUTE_Y:
             table[i].nOperands = 2;
             break;
-        }
-        if ( ! table[i].valid ) {
-            table[i].nOperands = 0;
         }
     }
 }
