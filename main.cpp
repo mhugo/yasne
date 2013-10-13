@@ -44,6 +44,8 @@ int main( int argc, char *argv[] )
     cpu.regY = 0;
     cpu.memory = memory;
 
+    //    cpu.addWriteWatch( 0 );
+
     //    memory[0x180] = 0x33;
 
     // compare to log file
@@ -93,7 +95,21 @@ int main( int argc, char *argv[] )
         
 
         cpu.pc += instr.nOperands + 1;
-        cpu.execute( instr );
+        bool pause = false;
+        try {
+            cpu.execute( instr );
+        }
+        catch ( CPU::ReadWatchTriggered& ) {
+            std::cout << "Read watch triggered" << std::endl;
+            pause = true;
+        }
+        catch ( CPU::WriteWatchTriggered& ) {
+            std::cout << "Write watch triggered" << std::endl;
+            pause = true;
+        }
+        if ( pause ) {
+            std::cin.get();
+        }
     }
 
     return 0;

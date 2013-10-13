@@ -8,6 +8,7 @@
 
 const char * InstructionDefinition::MnemonicString[] = 
 {
+    "Illegal",
     "PHP",
     "CLC",
     "PLP",
@@ -100,132 +101,132 @@ void InstructionDefinition::initTable()
     DEF_INSTRUCTION(0x00, MNEMONIC_BRK, ADDRESSING_NONE);
     DEF_INSTRUCTION(0x01, MNEMONIC_ORA, ADDRESSING_INDIRECT_X);
     DEF_INSTRUCTION(0x02, MNEMONIC_ASL, ADDRESSING_IMMEDIATE);
-    DEF_INSTRUCTION(0x03, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x03, MNEMONIC_SLO, ADDRESSING_INDIRECT_X);
     DEF_INSTRUCTION(0x04, MNEMONIC_NOP, ADDRESSING_ZERO_PAGE);
     DEF_INSTRUCTION(0x05, MNEMONIC_ORA, ADDRESSING_ZERO_PAGE);
     DEF_INSTRUCTION(0x06, MNEMONIC_ASL, ADDRESSING_ZERO_PAGE);
-    DEF_INSTRUCTION(0x07, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x07, MNEMONIC_SLO, ADDRESSING_ZERO_PAGE);
     DEF_INSTRUCTION(0x08, MNEMONIC_PHP, ADDRESSING_NONE);
     DEF_INSTRUCTION(0x09, MNEMONIC_ORA, ADDRESSING_IMMEDIATE);
     DEF_INSTRUCTION(0x0a, MNEMONIC_ASL, ADDRESSING_ACCUMULATOR);
-    DEF_INSTRUCTION(0x0b, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x0b, MNEMONIC_ILL, ADDRESSING_NONE);
     DEF_INSTRUCTION(0x0c, MNEMONIC_NOP, ADDRESSING_ABSOLUTE);
     DEF_INSTRUCTION(0x0d, MNEMONIC_ORA, ADDRESSING_ABSOLUTE);
     DEF_INSTRUCTION(0x0e, MNEMONIC_ASL, ADDRESSING_ABSOLUTE);
-    DEF_INSTRUCTION(0x0f, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x0f, MNEMONIC_SLO, ADDRESSING_ABSOLUTE);
     DEF_INSTRUCTION(0x10, MNEMONIC_BPL, ADDRESSING_RELATIVE);
     DEF_INSTRUCTION(0x11, MNEMONIC_ORA, ADDRESSING_INDIRECT_Y);
     DEF_INSTRUCTION(0x12, MNEMONIC_NOP, ADDRESSING_NONE);
-    DEF_INSTRUCTION(0x13, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x13, MNEMONIC_SLO, ADDRESSING_INDIRECT_Y);
     DEF_INSTRUCTION(0x14, MNEMONIC_NOP, ADDRESSING_ZERO_PAGE_X);
     DEF_INSTRUCTION(0x15, MNEMONIC_ORA, ADDRESSING_ZERO_PAGE_X);
     DEF_INSTRUCTION(0x16, MNEMONIC_ASL, ADDRESSING_ZERO_PAGE_X);
-    DEF_INSTRUCTION(0x17, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x17, MNEMONIC_SLO, ADDRESSING_ZERO_PAGE_X);
     DEF_INSTRUCTION(0x18, MNEMONIC_CLC, ADDRESSING_NONE);
     DEF_INSTRUCTION(0x19, MNEMONIC_ORA, ADDRESSING_ABSOLUTE_Y);
     DEF_INSTRUCTION(0x1a, MNEMONIC_NOP, ADDRESSING_NONE);
-    DEF_INSTRUCTION(0x1b, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x1b, MNEMONIC_SLO, ADDRESSING_ABSOLUTE_Y);
     DEF_INSTRUCTION(0x1c, MNEMONIC_NOP, ADDRESSING_ABSOLUTE_X);
     DEF_INSTRUCTION(0x1d, MNEMONIC_ORA, ADDRESSING_ABSOLUTE_X);
     DEF_INSTRUCTION(0x1e, MNEMONIC_ASL, ADDRESSING_ABSOLUTE_X);
-    DEF_INSTRUCTION(0x1f, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x1f, MNEMONIC_SLO, ADDRESSING_ABSOLUTE_X);
     DEF_INSTRUCTION(0x20, MNEMONIC_JSR, ADDRESSING_ABSOLUTE);
     DEF_INSTRUCTION(0x21, MNEMONIC_AND, ADDRESSING_INDIRECT_X);
     DEF_INSTRUCTION(0x22, MNEMONIC_ROL, ADDRESSING_IMMEDIATE);
-    DEF_INSTRUCTION(0x23, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x23, MNEMONIC_RLA, ADDRESSING_INDIRECT_X);
     DEF_INSTRUCTION(0x24, MNEMONIC_BIT, ADDRESSING_ZERO_PAGE);
     DEF_INSTRUCTION(0x25, MNEMONIC_AND, ADDRESSING_ZERO_PAGE);
     DEF_INSTRUCTION(0x26, MNEMONIC_ROL, ADDRESSING_ZERO_PAGE);
-    DEF_INSTRUCTION(0x27, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x27, MNEMONIC_RLA, ADDRESSING_ZERO_PAGE);
     DEF_INSTRUCTION(0x28, MNEMONIC_PLP, ADDRESSING_NONE);
     DEF_INSTRUCTION(0x29, MNEMONIC_AND, ADDRESSING_IMMEDIATE);
     DEF_INSTRUCTION(0x2a, MNEMONIC_ROL, ADDRESSING_ACCUMULATOR);
-    DEF_INSTRUCTION(0x2b, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x2b, MNEMONIC_ILL, ADDRESSING_NONE);
     DEF_INSTRUCTION(0x2c, MNEMONIC_BIT, ADDRESSING_ABSOLUTE);
     DEF_INSTRUCTION(0x2d, MNEMONIC_AND, ADDRESSING_ABSOLUTE);
     DEF_INSTRUCTION(0x2e, MNEMONIC_ROL, ADDRESSING_ABSOLUTE);
-    DEF_INSTRUCTION(0x2f, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x2f, MNEMONIC_RLA, ADDRESSING_ABSOLUTE);
     DEF_INSTRUCTION(0x30, MNEMONIC_BMI, ADDRESSING_RELATIVE);
     DEF_INSTRUCTION(0x31, MNEMONIC_AND, ADDRESSING_INDIRECT_Y);
     DEF_INSTRUCTION(0x32, MNEMONIC_NOP, ADDRESSING_NONE);
-    DEF_INSTRUCTION(0x33, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x33, MNEMONIC_RLA, ADDRESSING_INDIRECT_Y);
     DEF_INSTRUCTION(0x34, MNEMONIC_NOP, ADDRESSING_ZERO_PAGE_X);
     DEF_INSTRUCTION(0x35, MNEMONIC_AND, ADDRESSING_ZERO_PAGE_X);
     DEF_INSTRUCTION(0x36, MNEMONIC_ROL, ADDRESSING_ZERO_PAGE_X);
-    DEF_INSTRUCTION(0x37, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x37, MNEMONIC_RLA, ADDRESSING_ZERO_PAGE_X);
     DEF_INSTRUCTION(0x38, MNEMONIC_SEC, ADDRESSING_NONE);
     DEF_INSTRUCTION(0x39, MNEMONIC_AND, ADDRESSING_ABSOLUTE_Y);
     DEF_INSTRUCTION(0x3a, MNEMONIC_NOP, ADDRESSING_NONE);
-    DEF_INSTRUCTION(0x3b, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x3b, MNEMONIC_RLA, ADDRESSING_ABSOLUTE_Y);
     DEF_INSTRUCTION(0x3c, MNEMONIC_NOP, ADDRESSING_ABSOLUTE_X);
     DEF_INSTRUCTION(0x3d, MNEMONIC_AND, ADDRESSING_ABSOLUTE_X);
     DEF_INSTRUCTION(0x3e, MNEMONIC_ROL, ADDRESSING_ABSOLUTE_X);
-    DEF_INSTRUCTION(0x3f, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x3f, MNEMONIC_RLA, ADDRESSING_ABSOLUTE_X);
     DEF_INSTRUCTION(0x40, MNEMONIC_RTI, ADDRESSING_NONE);
     DEF_INSTRUCTION(0x41, MNEMONIC_EOR, ADDRESSING_INDIRECT_X);
     DEF_INSTRUCTION(0x42, MNEMONIC_LSR, ADDRESSING_IMMEDIATE);
-    DEF_INSTRUCTION(0x43, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x43, MNEMONIC_SRE, ADDRESSING_INDIRECT_X);
     DEF_INSTRUCTION(0x44, MNEMONIC_NOP, ADDRESSING_ZERO_PAGE);
     DEF_INSTRUCTION(0x45, MNEMONIC_EOR, ADDRESSING_ZERO_PAGE);
     DEF_INSTRUCTION(0x46, MNEMONIC_LSR, ADDRESSING_ZERO_PAGE);
-    DEF_INSTRUCTION(0x47, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x47, MNEMONIC_SRE, ADDRESSING_ZERO_PAGE);
     DEF_INSTRUCTION(0x48, MNEMONIC_PHA, ADDRESSING_NONE);
     DEF_INSTRUCTION(0x49, MNEMONIC_EOR, ADDRESSING_IMMEDIATE);
     DEF_INSTRUCTION(0x4a, MNEMONIC_LSR, ADDRESSING_ACCUMULATOR);
-    DEF_INSTRUCTION(0x4b, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x4b, MNEMONIC_ILL, ADDRESSING_NONE);
     DEF_INSTRUCTION(0x4c, MNEMONIC_JMP, ADDRESSING_ABSOLUTE);
     DEF_INSTRUCTION(0x4d, MNEMONIC_EOR, ADDRESSING_ABSOLUTE);
     DEF_INSTRUCTION(0x4e, MNEMONIC_LSR, ADDRESSING_ABSOLUTE);
-    DEF_INSTRUCTION(0x4f, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x4f, MNEMONIC_SRE, ADDRESSING_ABSOLUTE);
     DEF_INSTRUCTION(0x50, MNEMONIC_BVC, ADDRESSING_RELATIVE);
     DEF_INSTRUCTION(0x51, MNEMONIC_EOR, ADDRESSING_INDIRECT_Y);
     DEF_INSTRUCTION(0x52, MNEMONIC_NOP, ADDRESSING_NONE);
-    DEF_INSTRUCTION(0x53, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x53, MNEMONIC_SRE, ADDRESSING_INDIRECT_Y);
     DEF_INSTRUCTION(0x54, MNEMONIC_NOP, ADDRESSING_ZERO_PAGE_X);
     DEF_INSTRUCTION(0x55, MNEMONIC_EOR, ADDRESSING_ZERO_PAGE_X);
     DEF_INSTRUCTION(0x56, MNEMONIC_LSR, ADDRESSING_ZERO_PAGE_X);
-    DEF_INSTRUCTION(0x57, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x57, MNEMONIC_SRE, ADDRESSING_ZERO_PAGE_X);
     DEF_INSTRUCTION(0x58, MNEMONIC_CLI, ADDRESSING_NONE);
     DEF_INSTRUCTION(0x59, MNEMONIC_EOR, ADDRESSING_ABSOLUTE_Y);
     DEF_INSTRUCTION(0x5a, MNEMONIC_NOP, ADDRESSING_NONE);
-    DEF_INSTRUCTION(0x5b, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x5b, MNEMONIC_SRE, ADDRESSING_ABSOLUTE_Y);
     DEF_INSTRUCTION(0x5c, MNEMONIC_NOP, ADDRESSING_ABSOLUTE_X);
     DEF_INSTRUCTION(0x5d, MNEMONIC_EOR, ADDRESSING_ABSOLUTE_X);
     DEF_INSTRUCTION(0x5e, MNEMONIC_LSR, ADDRESSING_ABSOLUTE_X);
-    DEF_INSTRUCTION(0x5f, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x5f, MNEMONIC_SRE, ADDRESSING_ABSOLUTE_X);
     DEF_INSTRUCTION(0x60, MNEMONIC_RTS, ADDRESSING_NONE);
     DEF_INSTRUCTION(0x61, MNEMONIC_ADC, ADDRESSING_INDIRECT_X);
     DEF_INSTRUCTION(0x62, MNEMONIC_ROR, ADDRESSING_IMMEDIATE);
-    DEF_INSTRUCTION(0x63, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x63, MNEMONIC_RRA, ADDRESSING_INDIRECT_X);
     DEF_INSTRUCTION(0x64, MNEMONIC_NOP, ADDRESSING_ZERO_PAGE);
     DEF_INSTRUCTION(0x65, MNEMONIC_ADC, ADDRESSING_ZERO_PAGE);
     DEF_INSTRUCTION(0x66, MNEMONIC_ROR, ADDRESSING_ZERO_PAGE);
-    DEF_INSTRUCTION(0x67, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x67, MNEMONIC_RRA, ADDRESSING_ZERO_PAGE);
     DEF_INSTRUCTION(0x68, MNEMONIC_PLA, ADDRESSING_NONE);
     DEF_INSTRUCTION(0x69, MNEMONIC_ADC, ADDRESSING_IMMEDIATE);
     DEF_INSTRUCTION(0x6a, MNEMONIC_ROR, ADDRESSING_ACCUMULATOR);
-    DEF_INSTRUCTION(0x6b, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x6b, MNEMONIC_ILL, ADDRESSING_NONE);
     DEF_INSTRUCTION(0x6c, MNEMONIC_JMP, ADDRESSING_INDIRECT);
     DEF_INSTRUCTION(0x6d, MNEMONIC_ADC, ADDRESSING_ABSOLUTE);
     DEF_INSTRUCTION(0x6e, MNEMONIC_ROR, ADDRESSING_ABSOLUTE);
-    DEF_INSTRUCTION(0x6f, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x6f, MNEMONIC_RRA, ADDRESSING_ABSOLUTE);
     DEF_INSTRUCTION(0x70, MNEMONIC_BVS, ADDRESSING_RELATIVE);
     DEF_INSTRUCTION(0x71, MNEMONIC_ADC, ADDRESSING_INDIRECT_Y);
     DEF_INSTRUCTION(0x72, MNEMONIC_NOP, ADDRESSING_NONE);
-    DEF_INSTRUCTION(0x73, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x73, MNEMONIC_RRA, ADDRESSING_INDIRECT_Y);
     DEF_INSTRUCTION(0x74, MNEMONIC_NOP, ADDRESSING_ZERO_PAGE_X);
     DEF_INSTRUCTION(0x75, MNEMONIC_ADC, ADDRESSING_ZERO_PAGE_X);
     DEF_INSTRUCTION(0x76, MNEMONIC_ROR, ADDRESSING_ZERO_PAGE_X);
-    DEF_INSTRUCTION(0x77, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x77, MNEMONIC_RRA, ADDRESSING_ZERO_PAGE_X);
     DEF_INSTRUCTION(0x78, MNEMONIC_SEI, ADDRESSING_NONE);
     DEF_INSTRUCTION(0x79, MNEMONIC_ADC, ADDRESSING_ABSOLUTE_Y);
     DEF_INSTRUCTION(0x7a, MNEMONIC_NOP, ADDRESSING_NONE);
-    DEF_INSTRUCTION(0x7b, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x7b, MNEMONIC_RRA, ADDRESSING_ABSOLUTE_Y);
     DEF_INSTRUCTION(0x7c, MNEMONIC_NOP, ADDRESSING_ABSOLUTE_X);
     DEF_INSTRUCTION(0x7d, MNEMONIC_ADC, ADDRESSING_ABSOLUTE_X);
     DEF_INSTRUCTION(0x7e, MNEMONIC_ROR, ADDRESSING_ABSOLUTE_X);
-    DEF_INSTRUCTION(0x7f, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
-    DEF_INSTRUCTION(0x80, MNEMONIC_STY, ADDRESSING_IMMEDIATE);
+    DEF_INSTRUCTION(0x7f, MNEMONIC_RRA, ADDRESSING_ABSOLUTE_X);
+    DEF_INSTRUCTION(0x80, MNEMONIC_NOP, ADDRESSING_IMMEDIATE);
     DEF_INSTRUCTION(0x81, MNEMONIC_STA, ADDRESSING_INDIRECT_X);
     DEF_INSTRUCTION(0x82, MNEMONIC_STX, ADDRESSING_IMMEDIATE);
     DEF_INSTRUCTION(0x83, MNEMONIC_SAX, ADDRESSING_INDIRECT_X);
@@ -236,7 +237,7 @@ void InstructionDefinition::initTable()
     DEF_INSTRUCTION(0x88, MNEMONIC_DEY, ADDRESSING_NONE);
     DEF_INSTRUCTION(0x89, MNEMONIC_STA, ADDRESSING_IMMEDIATE);
     DEF_INSTRUCTION(0x8a, MNEMONIC_TXA, ADDRESSING_NONE);
-    DEF_INSTRUCTION(0x8b, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x8b, MNEMONIC_ILL, ADDRESSING_NONE);
     DEF_INSTRUCTION(0x8c, MNEMONIC_STY, ADDRESSING_ABSOLUTE);
     DEF_INSTRUCTION(0x8d, MNEMONIC_STA, ADDRESSING_ABSOLUTE);
     DEF_INSTRUCTION(0x8e, MNEMONIC_STX, ADDRESSING_ABSOLUTE);
@@ -244,7 +245,7 @@ void InstructionDefinition::initTable()
     DEF_INSTRUCTION(0x90, MNEMONIC_BCC, ADDRESSING_RELATIVE);
     DEF_INSTRUCTION(0x91, MNEMONIC_STA, ADDRESSING_INDIRECT_Y);
     DEF_INSTRUCTION(0x92, MNEMONIC_NOP, ADDRESSING_NONE);
-    DEF_INSTRUCTION(0x93, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x93, MNEMONIC_ILL, ADDRESSING_NONE);
     DEF_INSTRUCTION(0x94, MNEMONIC_STY, ADDRESSING_ZERO_PAGE_X);
     DEF_INSTRUCTION(0x95, MNEMONIC_STA, ADDRESSING_ZERO_PAGE_X);
     DEF_INSTRUCTION(0x96, MNEMONIC_STX, ADDRESSING_ZERO_PAGE_Y);
@@ -252,11 +253,11 @@ void InstructionDefinition::initTable()
     DEF_INSTRUCTION(0x98, MNEMONIC_TYA, ADDRESSING_NONE);
     DEF_INSTRUCTION(0x99, MNEMONIC_STA, ADDRESSING_ABSOLUTE_Y);
     DEF_INSTRUCTION(0x9a, MNEMONIC_TXS, ADDRESSING_NONE);
-    DEF_INSTRUCTION(0x9b, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x9b, MNEMONIC_ILL, ADDRESSING_NONE);
     DEF_INSTRUCTION(0x9c, MNEMONIC_STY, ADDRESSING_ABSOLUTE_X);
     DEF_INSTRUCTION(0x9d, MNEMONIC_STA, ADDRESSING_ABSOLUTE_X);
     DEF_INSTRUCTION(0x9e, MNEMONIC_STX, ADDRESSING_ABSOLUTE_Y);
-    DEF_INSTRUCTION(0x9f, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0x9f, MNEMONIC_ILL, ADDRESSING_NONE);
     DEF_INSTRUCTION(0xa0, MNEMONIC_LDY, ADDRESSING_IMMEDIATE);
     DEF_INSTRUCTION(0xa1, MNEMONIC_LDA, ADDRESSING_INDIRECT_X);
     DEF_INSTRUCTION(0xa2, MNEMONIC_LDX, ADDRESSING_IMMEDIATE);
@@ -268,7 +269,7 @@ void InstructionDefinition::initTable()
     DEF_INSTRUCTION(0xa8, MNEMONIC_TAY, ADDRESSING_NONE);
     DEF_INSTRUCTION(0xa9, MNEMONIC_LDA, ADDRESSING_IMMEDIATE);
     DEF_INSTRUCTION(0xaa, MNEMONIC_TAX, ADDRESSING_NONE);
-    DEF_INSTRUCTION(0xab, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xab, MNEMONIC_ILL, ADDRESSING_NONE);
     DEF_INSTRUCTION(0xac, MNEMONIC_LDY, ADDRESSING_ABSOLUTE);
     DEF_INSTRUCTION(0xad, MNEMONIC_LDA, ADDRESSING_ABSOLUTE);
     DEF_INSTRUCTION(0xae, MNEMONIC_LDX, ADDRESSING_ABSOLUTE);
@@ -284,7 +285,7 @@ void InstructionDefinition::initTable()
     DEF_INSTRUCTION(0xb8, MNEMONIC_CLV, ADDRESSING_NONE);
     DEF_INSTRUCTION(0xb9, MNEMONIC_LDA, ADDRESSING_ABSOLUTE_Y);
     DEF_INSTRUCTION(0xba, MNEMONIC_TSX, ADDRESSING_NONE);
-    DEF_INSTRUCTION(0xbb, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xbb, MNEMONIC_ILL, ADDRESSING_NONE);
     DEF_INSTRUCTION(0xbc, MNEMONIC_LDY, ADDRESSING_ABSOLUTE_X);
     DEF_INSTRUCTION(0xbd, MNEMONIC_LDA, ADDRESSING_ABSOLUTE_X);
     DEF_INSTRUCTION(0xbe, MNEMONIC_LDX, ADDRESSING_ABSOLUTE_Y);
@@ -300,7 +301,7 @@ void InstructionDefinition::initTable()
     DEF_INSTRUCTION(0xc8, MNEMONIC_INY, ADDRESSING_NONE);
     DEF_INSTRUCTION(0xc9, MNEMONIC_CMP, ADDRESSING_IMMEDIATE);
     DEF_INSTRUCTION(0xca, MNEMONIC_DEX, ADDRESSING_NONE);
-    DEF_INSTRUCTION(0xcb, /*?*/MNEMONIC_NOP, ADDRESSING_NONE);
+    DEF_INSTRUCTION(0xcb, MNEMONIC_ILL, ADDRESSING_NONE);
     DEF_INSTRUCTION(0xcc, MNEMONIC_CPY, ADDRESSING_ABSOLUTE);
     DEF_INSTRUCTION(0xcd, MNEMONIC_CMP, ADDRESSING_ABSOLUTE);
     DEF_INSTRUCTION(0xce, MNEMONIC_DEC, ADDRESSING_ABSOLUTE);
@@ -380,6 +381,15 @@ void InstructionDefinition::initTable()
             break;
         }
     }
+}
+
+void CPU::addReadWatch( uint16_t adr )
+{
+    read_watch.insert( adr );
+}
+void CPU::addWriteWatch( uint16_t adr )
+{
+    write_watch.insert( adr );
 }
 
 Instruction Instruction::decode( const uint8_t* adr )
@@ -482,6 +492,9 @@ uint8_t CPU::readMem8( uint16_t addr )
 {
     std::cout << "@" << std::setw(4) << std::setfill('0') << addr;
     std::cout << " => " << (memory[addr]+0) << std::endl;
+    if ( read_watch.find( addr ) != read_watch.end() ) {
+        throw ReadWatchTriggered();
+    }
     return memory[ addr ];
 }
 
@@ -503,6 +516,9 @@ void CPU::writeMem8( uint16_t addr, uint8_t v )
     std::cout << "@" << std::setw(4) << std::setfill('0') << addr ;
     std::cout << " <= " << (v+0) << std::endl;
     memory[addr] = v;
+    if ( write_watch.find( addr ) != write_watch.end() ) {
+        throw WriteWatchTriggered();
+    }
 }
 
 void CPU::writeMem16( uint16_t addr, uint16_t v )
@@ -559,7 +575,7 @@ uint8_t CPU::resolveAddressing( const Instruction& instr )
         return readMem8(pz);
     }   
     default:
-        std::cout << "Unsupported addressing" << std::endl;
+        throw std::runtime_error("Unsupported addressing");
     }
 }
 
@@ -611,7 +627,7 @@ uint16_t CPU::resolveWAddressing( const Instruction& instr )
         return adr;
     }
     default:
-        std::cout << "Unsupport W addressing " << def.addressing << std::endl;
+        throw std::runtime_error("Unsupported W addressing ");
     }
     return 0;
 }
@@ -680,6 +696,228 @@ void CPU::updateNStatus( uint8_t v )
     }
 }
 
+void CPU::instr_dec( const Instruction& instr )
+{
+    // decrement memory
+    uint8_t v = resolveAddressing( instr );
+    v--;
+    uint16_t addr = resolveWAddressing( instr );
+    writeMem8( addr, v );
+    updateZStatus( v );
+    updateNStatus( v );
+}
+
+void CPU::instr_inc( const Instruction& instr )
+{
+    // increment memory
+    uint8_t v = resolveAddressing( instr );
+    v++;
+    uint16_t addr = resolveWAddressing( instr );
+    writeMem8( addr, v );
+    updateZStatus( v );
+    updateNStatus( v );
+}
+
+void CPU::instr_cmp( const Instruction& instr )
+{
+        // CMP regA  operand
+        uint8_t mem = resolveAddressing( instr );
+        int16_t d = regA - mem;
+        if ( d >= 0 ) {
+            status |= FLAG_C_MASK;
+        }
+        else
+        {
+            status &= (0xFF - FLAG_C_MASK);
+        }
+        updateZStatus(d);
+        updateNStatus(d);
+}
+
+void CPU::instr_sbc( const Instruction& instr )
+{
+    // substract with not carry A-M-(1-C)
+    uint8_t mem = resolveAddressing( instr );
+    uint16_t s = regA - mem - ((status & FLAG_C_MASK) ? 0 : 1);
+    int16_t s2 = (int8_t)regA - (int8_t)mem - ((status & FLAG_C_MASK) ? 0 : 1);
+    if ( s <= 0xFF ) {
+        status |= FLAG_C_MASK;
+    }
+    else
+    {
+        status &= (0xFF - FLAG_C_MASK);
+    }
+    regA = s & 0xFF;
+    updateZStatus(regA);
+    updateNStatus(regA);
+    if ( (s2 < -128) || (s2 > 127) ) {
+        status |= FLAG_V_MASK;
+    }
+    else {
+        status &= (0xFF - FLAG_V_MASK);
+    }
+}
+
+void CPU::instr_adc( const Instruction& instr )
+{
+    // add with carry A+M+C
+    uint8_t mem = resolveAddressing( instr );
+    uint16_t s = regA + mem + ((status & FLAG_C_MASK) ? 1 : 0);
+    int16_t s2 = (int8_t)regA + (int8_t)mem + ((status & FLAG_C_MASK) ? 1 : 0);
+    if ( s > 0xFF ) {
+        status |= FLAG_C_MASK;
+    }
+    else
+    {
+        status &= (0xFF - FLAG_C_MASK);
+    }
+    regA = s & 0xFF;
+    updateZStatus(regA);
+    updateNStatus(regA);
+    if ( (s2 < -128) || (s2 > 127) ) {
+        status |= FLAG_V_MASK;
+    }
+    else {
+        status &= (0xFF - FLAG_V_MASK);
+    }
+}
+
+void CPU::instr_asl( const Instruction& instr, const InstructionDefinition& def )
+{
+    // arithmetic shift left
+    bool isAccu = def.addressing == InstructionDefinition::ADDRESSING_ACCUMULATOR;
+    uint8_t v = regA;
+    uint16_t addr;
+    if ( !isAccu ) {
+        addr = resolveWAddressing( instr );
+        v = readMem8( addr );
+    }
+    uint16_t t = v << 1;
+    if ( t & 0x100 ) {
+        status |= FLAG_C_MASK;
+    }
+    else {
+        status &= ~FLAG_C_MASK;
+    }
+    v = t & 0xFF;
+    if ( isAccu ) {
+        regA = v;
+    }
+    else {
+        writeMem8( addr, v );
+    }
+    updateNStatus( v );
+    updateZStatus( v );
+}
+
+void CPU::instr_rol( const Instruction& instr, const InstructionDefinition& def )
+{
+    // rotate left
+    bool isAccu = def.addressing == InstructionDefinition::ADDRESSING_ACCUMULATOR;
+    uint8_t v = regA;
+    uint16_t addr;
+    if ( !isAccu ) {
+        addr = resolveWAddressing( instr );
+        v = readMem8( addr );
+    }
+    int oldCarry = (status & FLAG_C_MASK) ? 1:0;
+    uint16_t t = v << 1;
+    if ( t & 0x100 ) {
+        status |= FLAG_C_MASK;
+    }
+    else {
+        status &= ~FLAG_C_MASK;
+    }
+    v = (t & 0xFF) | oldCarry;
+    if ( isAccu ) {
+        regA = v;
+    }
+    else {
+        writeMem8( addr, v );
+    }
+    updateNStatus( v );
+    updateZStatus( v );
+}
+
+void CPU::instr_ror( const Instruction& instr, const InstructionDefinition& def )
+{
+    // rotate right
+    bool isAccu = def.addressing == InstructionDefinition::ADDRESSING_ACCUMULATOR;
+    uint8_t v = regA;
+    uint16_t addr;
+    if ( !isAccu ) {
+        addr = resolveWAddressing( instr );
+        v = readMem8( addr );
+    }
+    uint8_t t = (((status&FLAG_C_MASK)?1:0) << 7) | (v >> 1);
+    if ( v & 1 ) {
+        status |= FLAG_C_MASK;
+    }
+    else {
+        status &= ~FLAG_C_MASK;
+    }
+    v = t;
+    if ( isAccu ) {
+        regA = v;
+    }
+    else {
+        writeMem8( addr, v );
+    }
+    updateNStatus( v );
+    updateZStatus( v );
+}
+void CPU::instr_lsr( const Instruction& instr, const InstructionDefinition& def )
+{
+    // logical shift right
+    bool isAccu = def.addressing == InstructionDefinition::ADDRESSING_ACCUMULATOR;
+    uint8_t v = regA;
+    uint16_t addr;
+    if ( !isAccu ) {
+        addr = resolveWAddressing( instr );
+        v = readMem8( addr );
+    }
+    if ( v & 0x1 ) {
+        status |= FLAG_C_MASK;
+    }
+    else {
+        status &= ~FLAG_C_MASK;
+    }
+    v = v >> 1;
+    if ( isAccu ) {
+        regA = v;
+    }
+    else {
+        writeMem8( addr, v );
+    }
+    updateNStatus( v );
+    updateZStatus( v );
+}
+void CPU::instr_ora( const Instruction& instr )
+{
+    // OR regA & operand
+    uint8_t mem = resolveAddressing( instr );
+    regA = regA | mem;
+    updateZStatus(regA);
+    updateNStatus(regA);
+}
+
+void CPU::instr_eor( const Instruction& instr )
+{
+    // XOR regA & operand
+    uint8_t mem = resolveAddressing( instr );
+    regA = regA ^ mem;
+    updateZStatus(regA);
+    updateNStatus(regA);
+}
+void CPU::instr_and( const Instruction& instr )
+{
+    // AND regA & operand
+    uint8_t mem = resolveAddressing( instr );
+    regA = regA & mem;
+    updateZStatus(regA);
+    updateNStatus(regA);
+}
+
 void CPU::execute( const Instruction& instr )
 {
     InstructionDefinition def = InstructionDefinition::table()[ instr.opcode ];
@@ -690,6 +928,10 @@ void CPU::execute( const Instruction& instr )
 
     switch ( def.mnemonic )
     {
+    case InstructionDefinition::MNEMONIC_ILL: {
+        throw std::runtime_error("Illegal instruction!");
+        break;
+    }
     case InstructionDefinition::MNEMONIC_JMP: {
         uint16_t adr = (instr.operand2 << 8) + instr.operand1;
         if ( def.addressing == InstructionDefinition::ADDRESSING_INDIRECT ) {
@@ -901,42 +1143,19 @@ void CPU::execute( const Instruction& instr )
         break;
     }
     case InstructionDefinition::MNEMONIC_AND: {
-        // AND regA & operand
-        uint8_t mem = resolveAddressing( instr );
-        regA = regA & mem;
-        updateZStatus(regA);
-        updateNStatus(regA);
+        instr_and( instr );
         break;
     }
     case InstructionDefinition::MNEMONIC_ORA: {
-        // OR regA & operand
-        uint8_t mem = resolveAddressing( instr );
-        regA = regA | mem;
-        updateZStatus(regA);
-        updateNStatus(regA);
+        instr_ora( instr );
         break;
     }
     case InstructionDefinition::MNEMONIC_EOR: {
-        // XOR regA & operand
-        uint8_t mem = resolveAddressing( instr );
-        regA = regA ^ mem;
-        updateZStatus(regA);
-        updateNStatus(regA);
+        instr_eor( instr );
         break;
     }
     case InstructionDefinition::MNEMONIC_CMP: {
-        // CMP regA  operand
-        uint8_t mem = resolveAddressing( instr );
-        int16_t d = regA - mem;
-        if ( d >= 0 ) {
-            status |= FLAG_C_MASK;
-        }
-        else
-        {
-            status &= (0xFF - FLAG_C_MASK);
-        }
-        updateZStatus(d);
-        updateNStatus(d);
+        instr_cmp( instr );
         break;
     }
     case InstructionDefinition::MNEMONIC_CPX: {
@@ -970,59 +1189,15 @@ void CPU::execute( const Instruction& instr )
         break;
     }
     case InstructionDefinition::MNEMONIC_ADC: {
-        // add with carry A+M+C
-        uint8_t mem = resolveAddressing( instr );
-        uint16_t s = regA + mem + ((status & FLAG_C_MASK) ? 1 : 0);
-        int16_t s2 = (int8_t)regA + (int8_t)mem + ((status & FLAG_C_MASK) ? 1 : 0);
-        if ( s > 0xFF ) {
-            status |= FLAG_C_MASK;
-        }
-        else
-        {
-            status &= (0xFF - FLAG_C_MASK);
-        }
-        regA = s & 0xFF;
-        updateZStatus(regA);
-        updateNStatus(regA);
-        if ( (s2 < -128) || (s2 > 127) ) {
-            status |= FLAG_V_MASK;
-        }
-        else {
-            status &= (0xFF - FLAG_V_MASK);
-        }
+        instr_adc( instr );
         break;
     }
     case InstructionDefinition::MNEMONIC_SBC: {
-        // substract with not carry A-M-(1-C)
-        uint8_t mem = resolveAddressing( instr );
-        uint16_t s = regA - mem - ((status & FLAG_C_MASK) ? 0 : 1);
-        int16_t s2 = (int8_t)regA - (int8_t)mem - ((status & FLAG_C_MASK) ? 0 : 1);
-        if ( s <= 0xFF ) {
-            status |= FLAG_C_MASK;
-        }
-        else
-        {
-            status &= (0xFF - FLAG_C_MASK);
-        }
-        regA = s & 0xFF;
-        updateZStatus(regA);
-        updateNStatus(regA);
-        if ( (s2 < -128) || (s2 > 127) ) {
-            status |= FLAG_V_MASK;
-        }
-        else {
-            status &= (0xFF - FLAG_V_MASK);
-        }
+        instr_sbc( instr );
         break;
     }
     case InstructionDefinition::MNEMONIC_INC: {
-        // increment memory
-        uint8_t v = resolveAddressing( instr );
-        v++;
-        uint16_t addr = resolveWAddressing( instr );
-        writeMem8( addr, v );
-        updateZStatus( v );
-        updateNStatus( v );
+        instr_inc( instr );
         break;
     }
     case InstructionDefinition::MNEMONIC_INX: {
@@ -1040,13 +1215,7 @@ void CPU::execute( const Instruction& instr )
         break;
     }
     case InstructionDefinition::MNEMONIC_DEC: {
-        // decrement memory
-        uint8_t v = resolveAddressing( instr );
-        v--;
-        uint16_t addr = resolveWAddressing( instr );
-        writeMem8( addr, v );
-        updateZStatus( v );
-        updateNStatus( v );
+        instr_dec( instr );
         break;
     }
     case InstructionDefinition::MNEMONIC_DEX: {
@@ -1104,111 +1273,19 @@ void CPU::execute( const Instruction& instr )
         break;
     }
     case InstructionDefinition::MNEMONIC_LSR: {
-        // logical shift right
-        bool isAccu = def.addressing == InstructionDefinition::ADDRESSING_ACCUMULATOR;
-        uint8_t v = regA;
-        uint16_t addr;
-        if ( !isAccu ) {
-            addr = resolveWAddressing( instr );
-            v = readMem8( addr );
-        }
-        if ( v & 0x1 ) {
-            status |= FLAG_C_MASK;
-        }
-        else {
-            status &= ~FLAG_C_MASK;
-        }
-        v = v >> 1;
-        if ( isAccu ) {
-            regA = v;
-        }
-        else {
-            writeMem8( addr, v );
-        }
-        updateNStatus( v );
-        updateZStatus( v );
+        instr_lsr( instr, def );
         break;
     }
     case InstructionDefinition::MNEMONIC_ASL: {
-        // aithmetic shift left
-        bool isAccu = def.addressing == InstructionDefinition::ADDRESSING_ACCUMULATOR;
-        uint8_t v = regA;
-        uint16_t addr;
-        if ( !isAccu ) {
-            addr = resolveWAddressing( instr );
-            v = readMem8( addr );
-        }
-        uint16_t t = v << 1;
-        if ( t & 0x100 ) {
-            status |= FLAG_C_MASK;
-        }
-        else {
-            status &= ~FLAG_C_MASK;
-        }
-        v = t & 0xFF;
-        if ( isAccu ) {
-            regA = v;
-        }
-        else {
-            writeMem8( addr, v );
-        }
-        updateNStatus( v );
-        updateZStatus( v );
+        instr_asl( instr, def );
         break;
     }
     case InstructionDefinition::MNEMONIC_ROR: {
-        // rotate right
-        bool isAccu = def.addressing == InstructionDefinition::ADDRESSING_ACCUMULATOR;
-        uint8_t v = regA;
-        uint16_t addr;
-        if ( !isAccu ) {
-            addr = resolveWAddressing( instr );
-            v = readMem8( addr );
-        }
-        uint8_t t = (((status&FLAG_C_MASK)?1:0) << 7) | (v >> 1);
-        if ( v & 1 ) {
-            status |= FLAG_C_MASK;
-        }
-        else {
-            status &= ~FLAG_C_MASK;
-        }
-        v = t;
-        if ( isAccu ) {
-            regA = v;
-        }
-        else {
-            writeMem8( addr, v );
-        }
-        updateNStatus( v );
-        updateZStatus( v );
+        instr_ror( instr, def );
         break;
     }
     case InstructionDefinition::MNEMONIC_ROL: {
-        // rotate left
-        bool isAccu = def.addressing == InstructionDefinition::ADDRESSING_ACCUMULATOR;
-        uint8_t v = regA;
-        uint16_t addr;
-        if ( !isAccu ) {
-            addr = resolveWAddressing( instr );
-            v = readMem8( addr );
-        }
-        int oldCarry = (status & FLAG_C_MASK) ? 1:0;
-        uint16_t t = v << 1;
-        if ( t & 0x100 ) {
-            status |= FLAG_C_MASK;
-        }
-        else {
-            status &= ~FLAG_C_MASK;
-        }
-        v = (t & 0xFF) | oldCarry;
-        if ( isAccu ) {
-            regA = v;
-        }
-        else {
-            writeMem8( addr, v );
-        }
-        updateNStatus( v );
-        updateZStatus( v );
+        instr_rol( instr, def );
         break;
     }
     case InstructionDefinition::MNEMONIC_LAX: {
@@ -1225,25 +1302,38 @@ void CPU::execute( const Instruction& instr )
         break;
     }
     case InstructionDefinition::MNEMONIC_DCP: {
-        // DEC then CMP
-        uint16_t mem = resolveWAddressing( instr );
-        uint8_t s = readMem8( mem );
-        s--;
-        writeMem8( mem, s );
-        int16_t d = regA - s;
-        if ( d >= 0 ) {
-            status |= FLAG_C_MASK;
-        }
-        else
-        {
-            status &= (0xFF - FLAG_C_MASK);
-        }
-        updateZStatus(d);
-        updateNStatus(d);
+        instr_dec( instr );
+        instr_cmp( instr );
         break;
     }
     case InstructionDefinition::MNEMONIC_ISC: {
         // INC then SBC
+        instr_inc( instr );
+        instr_sbc( instr );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_SLO: {
+        // ASL then ORA
+        instr_asl( instr, def );
+        instr_ora( instr );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_RLA: {
+        // ROL then AND
+        instr_rol( instr, def );
+        instr_and( instr );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_SRE: {
+        // LSR and EOR
+        instr_lsr( instr, def );
+        instr_eor( instr );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_RRA: {
+        // ROR then ADC
+        instr_ror( instr, def );
+        instr_adc( instr );
         break;
     }
     }

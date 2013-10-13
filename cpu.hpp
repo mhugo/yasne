@@ -2,6 +2,7 @@
 #include <string.h>
 #include <istream>
 #include <string>
+#include <set>
 
 struct InstructionDefinition
 {
@@ -11,6 +12,7 @@ struct InstructionDefinition
     // mnemonic
     enum Mnemonic
     {
+        MNEMONIC_ILL, /* illegal */
         MNEMONIC_PHP,
         MNEMONIC_CLC,
         MNEMONIC_PLP,
@@ -191,4 +193,27 @@ struct CPU
     void pushByte( uint8_t v );
     uint16_t pop();
     uint8_t popByte();
+
+    void addReadWatch( uint16_t );
+    void addWriteWatch( uint16_t );
+
+    struct ReadWatchTriggered {};
+    struct WriteWatchTriggered {};
+
+private:
+    void instr_dec( const Instruction& );
+    void instr_inc( const Instruction& );
+    void instr_cmp( const Instruction& );
+    void instr_sbc( const Instruction& );
+    void instr_adc( const Instruction& );
+    void instr_asl( const Instruction&, const InstructionDefinition& );
+    void instr_rol( const Instruction&, const InstructionDefinition& );
+    void instr_ror( const Instruction&, const InstructionDefinition& );
+    void instr_lsr( const Instruction&, const InstructionDefinition& );
+    void instr_ora( const Instruction& );
+    void instr_and( const Instruction& );
+    void instr_eor( const Instruction& );
+
+    std::set<uint16_t> read_watch;
+    std::set<uint16_t> write_watch;
 };
