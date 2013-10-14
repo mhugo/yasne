@@ -181,7 +181,6 @@ public:
     }
     virtual uint8_t read( uint16_t addr ) const
     {
-        std::cout << "RAM read @" << addr << std::endl;
         if ( addr >= size_ ) {
             throw OutOfBoundAddress();
         }
@@ -208,7 +207,6 @@ public:
     }
     virtual uint8_t read( uint16_t addr ) const
     {
-        std::cout << "ROM read @" << addr << std::endl;
         if ( addr >= size_ ) {
             throw OutOfBoundAddress();
         }
@@ -276,8 +274,8 @@ struct CPU
     uint8_t resolveAddressing( const Instruction& instr );
     uint16_t resolveWAddressing( const Instruction& instr );
 
-    uint8_t readMem8( uint16_t addr ) const;
-    void writeMem8( uint16_t addr, uint8_t v );
+    uint8_t readMem8( uint16_t addr, bool quiet = false ) const;
+    void writeMem8( uint16_t addr, uint8_t v, bool quiet = false );
 
     // update status based on a stored value
     void updateStatus( uint8_t v );

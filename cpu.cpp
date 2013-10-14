@@ -401,13 +401,13 @@ Instruction CPU::decode( uint16_t pc ) const
 {
     Instruction instr;
 
-    instr.opcode = readMem8( pc );
+    instr.opcode = readMem8( pc, true );
     InstructionDefinition def = InstructionDefinition::table()[ instr.opcode ];
     instr.nOperands = def.nOperands;
     if ( instr.nOperands >= 1 ) {
-        instr.operand1 = readMem8( pc + 1 );
+        instr.operand1 = readMem8( pc + 1, true );
         if ( instr.nOperands == 2 ) {
-            instr.operand2 = readMem8( pc + 2 );
+            instr.operand2 = readMem8( pc + 2, true );
         }
     }
     return instr;
@@ -498,24 +498,28 @@ std::ostream& operator<<( std::ostream& ostr, const Instruction& instr )
     return ostr;
 }
 
-uint8_t CPU::readMem8( uint16_t addr ) const
+uint8_t CPU::readMem8( uint16_t addr, bool quiet ) const
 {
     if ( read_watch.find( addr ) != read_watch.end() ) {
         throw ReadWatchTriggered();
     }
     uint8_t v = busDevice.read( addr );
-    std::cout << "@" << std::setw(4) << std::setfill('0') << addr;
-    std::cout << " => " << (v+0) << std::endl;
+    if ( !quiet ) {
+        std::cout << "@" << std::setw(4) << std::setfill('0') << addr;
+        std::cout << " => " << (v+0) << std::endl;
+    }
     return v;
 }
 
-void CPU::writeMem8( uint16_t addr, uint8_t v )
+void CPU::writeMem8( uint16_t addr, uint8_t v, bool quiet )
 {
     if ( addr >= 0x4020 ) {
         throw std::runtime_error( (boost::format("Can't write to %1%") % addr).str() );
     }
-    std::cout << "@" << std::setw(4) << std::setfill('0') << addr ;
-    std::cout << " <= " << (v+0) << std::endl;
+    if ( !quiet ) {
+        std::cout << "@" << std::setw(4) << std::setfill('0') << addr ;
+        std::cout << " <= " << (v+0) << std::endl;
+    }
     busDevice.write( addr, v );
     if ( write_watch.find( addr ) != write_watch.end() ) {
         throw WriteWatchTriggered();
