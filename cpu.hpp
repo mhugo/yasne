@@ -5,6 +5,8 @@
 #include <set>
 #include <map>
 
+#include "bus_device.hpp"
+
 struct InstructionDefinition
 {
     // raw opcode
@@ -158,19 +160,6 @@ std::ostream& operator<<( std::ostream& ostr, const Instruction& instr );
 #define FLAG_I_MASK (1<<2)
 #define FLAG_Z_MASK (1<<1)
 #define FLAG_C_MASK (1<<0)
-
-///
-/// BusDevice : a device plugged on the CPU buses
-/// Must have a method to read and a method to write
-class BusDevice
-{
-public:
-    virtual uint8_t read( uint16_t addr ) const = 0;
-    virtual void write( uint16_t addr, uint8_t val ) = 0;
-
-    // exception thrown by out-of-range address access
-    struct OutOfBoundAddress {};
-};
 
 class RAM : public BusDevice
 {
