@@ -383,6 +383,11 @@ void InstructionDefinition::initTable()
     }
 }
 
+void CPU::addOnBus( uint16_t addr, BusDevice* dev, uint16_t offset )
+{
+    busDevice.insert( addr, dev, offset );
+}
+
 void CPU::addReadWatch( uint16_t adr )
 {
     read_watch.insert( adr );
@@ -392,17 +397,17 @@ void CPU::addWriteWatch( uint16_t adr )
     write_watch.insert( adr );
 }
 
-Instruction Instruction::decode( const uint8_t* adr )
+Instruction CPU::decode( uint16_t pc ) const
 {
     Instruction instr;
-    
-    memcpy( &instr.opcode, adr, 1 );
+
+    instr.opcode = readMem8( pc );
     InstructionDefinition def = InstructionDefinition::table()[ instr.opcode ];
     instr.nOperands = def.nOperands;
     if ( instr.nOperands >= 1 ) {
-        memcpy( &instr.operand1, adr + 1, 1 );
+        instr.operand1 = readMem8( pc + 1 );
         if ( instr.nOperands == 2 ) {
-            memcpy( &instr.operand2, adr + 2, 1 );
+            instr.operand2 = readMem8( pc + 2 );
         }
     }
     return instr;
@@ -449,7 +454,12 @@ std::ostream& operator<<( std::ostream& ostr, const Instruction& instr )
         break;
     case InstructionDefinition::ADDRESSING_RELATIVE: {
         int8_t rel = instr.operand1;
-        ostr << "\t" << ((rel>=0)?"+":"") << std::setfill('0') << std::setw(2) << (rel+0);
+        if ( rel < 0 ) {
+            ostr << "\t-" <<  std::setfill('0') << std::setw(2) << (-rel+0);
+        }
+        else {
+            ostr << "\t" << ((rel>=0)?"+":"") << std::setfill('0') << std::setw(2) << (rel+0);
+        }
         break;
     }
     case InstructionDefinition::ADDRESSING_ABSOLUTE: {
@@ -488,23 +498,14 @@ std::ostream& operator<<( std::ostream& ostr, const Instruction& instr )
     return ostr;
 }
 
-uint8_t CPU::readMem8( uint16_t addr )
+uint8_t CPU::readMem8( uint16_t addr ) const
 {
-    std::cout << "@" << std::setw(4) << std::setfill('0') << addr;
-    std::cout << " => " << (memory[addr]+0) << std::endl;
     if ( read_watch.find( addr ) != read_watch.end() ) {
         throw ReadWatchTriggered();
     }
-    return memory[ addr ];
-}
-
-uint16_t CPU::readMem16( uint16_t addr )
-{
+    uint8_t v = busDevice.read( addr );
     std::cout << "@" << std::setw(4) << std::setfill('0') << addr;
-    uint16_t v;
-    v = memory[ addr ];
-    v |= memory[ addr+1 ] << 8;
-    std::cout << " => " << v << std::endl;
+    std::cout << " => " << (v+0) << std::endl;
     return v;
 }
 
@@ -515,20 +516,10 @@ void CPU::writeMem8( uint16_t addr, uint8_t v )
     }
     std::cout << "@" << std::setw(4) << std::setfill('0') << addr ;
     std::cout << " <= " << (v+0) << std::endl;
-    memory[addr] = v;
+    busDevice.write( addr, v );
     if ( write_watch.find( addr ) != write_watch.end() ) {
         throw WriteWatchTriggered();
     }
-}
-
-void CPU::writeMem16( uint16_t addr, uint16_t v )
-{
-    if ( addr >= 0x4020 ) {
-        throw std::runtime_error( (boost::format("Can't write to %1%") % addr).str() );
-    }
-    std::cout << "@" << std::setw(4) << std::setfill('0') << addr ;
-    std::cout << " <= " << v << std::endl;
-    memcpy( memory + addr, &v, 2 );
 }
 
 uint8_t CPU::resolveAddressing( const Instruction& instr )

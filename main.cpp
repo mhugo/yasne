@@ -27,16 +27,19 @@ int main( int argc, char *argv[] )
     std::cout << header << std::endl;
 
     const uint16_t baseAddr = 0xC000;
-    //    std::vector<uint8_t> mem(MEM_SIZE);
-    memory = new uint8_t[MEM_SIZE];
+    std::vector<uint8_t> mem(MEM_SIZE);
+    memory = &mem[0];
     memset( memory, 0xFF, MEM_SIZE );
-    nesFile.read( (char*)(memory + baseAddr), 16384 );
+
+    std::vector<uint8_t> rom(16384);
+    nesFile.read( (char*)&rom[0], 16384 );
 
     InstructionDefinition::initTable();
 
     CPU cpu;
 
     cpu.pc = baseAddr;
+    //    cpu.pc = (memory[0xfffd] << 8) | memory[0xfffc];
     cpu.sp = 0xFD;
     cpu.status = 0x24;
     cpu.regA = 0;
@@ -45,6 +48,17 @@ int main( int argc, char *argv[] )
     cpu.memory = memory;
 
     //    cpu.addWriteWatch( 0 );
+
+    ROM romDevice( 16384, &rom[0] );
+    RAM ramDevice( 2048 );
+
+    cpu.addOnBus( 0x0000, &ramDevice, 0x0000 );
+    cpu.addOnBus( 0x0800, &ramDevice, 0x0800 );
+    cpu.addOnBus( 0x1000, &ramDevice, 0x1000 );
+    cpu.addOnBus( 0x1800, &ramDevice, 0x1800 );
+    cpu.addOnBus( 0xC000, &romDevice, 0xC000 );
+
+    bool stepByStep = false;
 
     // compare to log file
     std::ifstream logFile;
@@ -81,8 +95,7 @@ int main( int argc, char *argv[] )
             sscanf( reg_sp_str.c_str(), "%04X", &regSP );
         }
 
-        const uint8_t* pt = (const uint8_t*)(memory + cpu.pc);
-        Instruction instr = Instruction::decode( pt );
+        Instruction instr = cpu.decode( cpu.pc );
         uint16_t cpu_pc = cpu.pc;
 
         printf("%04X\t", cpu.pc);
@@ -115,6 +128,9 @@ int main( int argc, char *argv[] )
         }
         catch ( CPU::WriteWatchTriggered& ) {
             std::cout << "Write watch triggered" << std::endl;
+            pause = true;
+        }
+        if ( stepByStep ) {
             pause = true;
         }
         if ( pause ) {

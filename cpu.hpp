@@ -3,6 +3,7 @@
 #include <istream>
 #include <string>
 #include <set>
+#include <map>
 
 struct InstructionDefinition
 {
@@ -145,8 +146,6 @@ struct Instruction
     bool valid;
 
     Instruction() : valid( false ) {}
-
-    static Instruction decode( const uint8_t* adr );
 };
 std::ostream& operator<<( std::ostream& ostr, const Instruction& instr );
 
@@ -159,6 +158,106 @@ std::ostream& operator<<( std::ostream& ostr, const Instruction& instr );
 #define FLAG_I_MASK (1<<2)
 #define FLAG_Z_MASK (1<<1)
 #define FLAG_C_MASK (1<<0)
+
+///
+/// BusDevice : a device plugged on the CPU buses
+/// Must have a method to read and a method to write
+class BusDevice
+{
+public:
+    virtual uint8_t read( uint16_t addr ) const = 0;
+    virtual void write( uint16_t addr, uint8_t val ) = 0;
+
+    // exception thrown by out-of-range address access
+    struct OutOfBoundAddress {};
+};
+
+class RAM : public BusDevice
+{
+public:
+    RAM( size_t size, uint8_t init = 0xFF ) : size_(size), mem_(size)
+    {
+        memset( &mem_[0], init, size_ );
+    }
+    virtual uint8_t read( uint16_t addr ) const
+    {
+        std::cout << "RAM read @" << addr << std::endl;
+        if ( addr >= size_ ) {
+            throw OutOfBoundAddress();
+        }
+        return mem_[addr];
+    }
+    virtual void write( uint16_t addr, uint8_t val )
+    {
+        if ( addr >= size_ ) {
+            throw OutOfBoundAddress();
+        }
+        mem_[addr] = val;
+    }
+private:
+    std::vector<uint8_t> mem_;
+    size_t size_;
+};
+
+class ROM : public BusDevice
+{
+public:
+    ROM( size_t size, uint8_t* src ) : size_(size), mem_(size)
+    {
+        memcpy( &mem_[0], src, size_ );
+    }
+    virtual uint8_t read( uint16_t addr ) const
+    {
+        std::cout << "ROM read @" << addr << std::endl;
+        if ( addr >= size_ ) {
+            throw OutOfBoundAddress();
+        }
+        return mem_[addr];
+    }
+    virtual void write( uint16_t addr, uint8_t val )
+    {
+        if ( addr >= size_ ) {
+            throw OutOfBoundAddress();
+        }
+        // nothing
+    }
+private:
+    std::vector<uint8_t> mem_;
+    size_t size_;
+};
+
+class MemoryMap
+{
+public:
+    MemoryMap() : map_() {}
+
+    void insert( uint16_t startAddress, BusDevice* dev, uint16_t offset )
+    {
+        map_[startAddress] = std::make_pair( dev, offset );
+    }
+
+    uint8_t read( uint16_t addr ) const
+    {
+        MMap::const_iterator it = map_.upper_bound( addr );
+        if ( it != map_.begin() ) --it;
+        BusDevice * dev = it->second.first;
+        uint16_t offset = it->second.second;
+        return dev->read( addr - offset );
+    }
+
+    void write( uint16_t addr, uint8_t val )
+    {
+        MMap::const_iterator it = map_.upper_bound( addr );
+        if ( it != map_.begin() ) --it;
+        BusDevice * dev = it->second.first;
+        uint16_t offset = it->second.second;
+        return dev->write( addr - offset, val );
+    }
+
+private:
+    typedef std::map<uint16_t, std::pair<BusDevice*, uint16_t > > MMap;
+    MMap map_;
+};
 
 struct CPU
 {
@@ -177,10 +276,8 @@ struct CPU
     uint8_t resolveAddressing( const Instruction& instr );
     uint16_t resolveWAddressing( const Instruction& instr );
 
-    uint8_t readMem8( uint16_t addr );
-    uint16_t readMem16( uint16_t addr );
+    uint8_t readMem8( uint16_t addr ) const;
     void writeMem8( uint16_t addr, uint8_t v );
-    void writeMem16( uint16_t addr, uint16_t v );
 
     // update status based on a stored value
     void updateStatus( uint8_t v );
@@ -200,6 +297,14 @@ struct CPU
     struct ReadWatchTriggered {};
     struct WriteWatchTriggered {};
 
+    /// Memory mapping
+    /// Connect dev on the memory bus
+    /// addr is the address on the bus
+    /// offset is where address 0 of the device is mapped
+    void addOnBus( uint16_t addr, BusDevice* dev, uint16_t offset );
+
+    Instruction decode( uint16_t pc ) const;
+
 private:
     void instr_dec( const Instruction& );
     void instr_inc( const Instruction& );
@@ -216,4 +321,8 @@ private:
 
     std::set<uint16_t> read_watch;
     std::set<uint16_t> write_watch;
+
+    // memory mappings
+    // address => ( BusDevice, address offset )
+    MemoryMap busDevice;
 };
