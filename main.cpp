@@ -142,6 +142,8 @@ int main( int argc, char *argv[] )
         if ( pause ) {
             std::cin.get();
         }
+
+        ppu.frame();
     }
     std::cout << "End" << std::endl;
 

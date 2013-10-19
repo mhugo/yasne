@@ -1,3 +1,4 @@
+#include "SDL.h"
 #include "bus_device.hpp"
 
 class PPU : public BusDevice
@@ -12,22 +13,17 @@ class PPU : public BusDevice
     static const int PPUAddr =   6;
     static const int PPUData =   7;
 
-    PPU()
-    {
-        // init
-    }
+    PPU();
+    virtual ~PPU();
 
-    uint8_t read( uint16_t addr ) const
-    {
-        //
-        return 0;
-    }
+    uint8_t read( uint16_t addr ) const;
+    void write( uint16_t addr, uint8_t val );
 
-    void write( uint16_t addr, uint8_t val )
-    {
-        //
-    }
+    void frame();
  private:
     // 8 registers
     uint8_t regs[8];
+
+    SDL_Window* win_;
+    SDL_Renderer* renderer_;
 };
