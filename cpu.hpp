@@ -108,6 +108,10 @@ struct InstructionDefinition
     // number of operands
     int nOperands;
 
+    // number of base cycles
+    // (+1 for page crossing and branching)
+    int nCycles;
+
     // valid ?
     bool valid;
 
@@ -126,11 +130,13 @@ struct InstructionDefinition
     InstructionDefinition( uint8_t opcode,
                            Mnemonic mnemo,
                            Addressing addressing,
-                           int nOperands ) :
+                           int nOperands,
+                           int nCycles ) :
         opcode(opcode),
         mnemonic(mnemo),
         addressing(addressing),
         nOperands(nOperands),
+        nCycles( nCycles ),
         valid( true )
     {
     }
@@ -257,6 +263,9 @@ struct CPU
     // pc
     uint16_t pc;
 
+    // cycles
+    int cycles;
+
     uint8_t *memory;
 
     void execute( const Instruction& instr );
@@ -277,6 +286,8 @@ struct CPU
     void pushByte( uint8_t v );
     uint16_t pop();
     uint8_t popByte();
+
+    void branchTo( uint16_t );
 
     void addReadWatch( uint16_t );
     void addWriteWatch( uint16_t );

@@ -47,6 +47,7 @@ int main( int argc, char *argv[] )
     cpu.regX = 0;
     cpu.regY = 0;
     cpu.memory = memory;
+    cpu.cycles = 0;
 
     //    cpu.addWriteWatch( 0 );
 
@@ -106,7 +107,7 @@ int main( int argc, char *argv[] )
         printf("%04X\t", cpu.pc);
         std::cout << instr;
 
-        printf("\tA:%02X X:%02X Y:%02X P:%02X SP:%02X\n", cpu.regA, cpu.regX, cpu.regY, cpu.status, cpu.sp );
+        printf("\tA:%02X X:%02X Y:%02X P:%02X SP:%02X CPU:%d\n", cpu.regA, cpu.regX, cpu.regY, cpu.status, cpu.sp, cpu.cycles );
 
         if ( testMode ) {
             if ( (cpu_pc != addr ) ||
