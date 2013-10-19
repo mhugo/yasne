@@ -20,6 +20,8 @@ class PPU : public BusDevice
     void write( uint16_t addr, uint8_t val );
 
     void frame();
+
+    int cycles;
  private:
     // 8 registers
     uint8_t regs[8];

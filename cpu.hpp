@@ -304,18 +304,18 @@ struct CPU
     Instruction decode( uint16_t pc ) const;
 
 private:
-    void instr_dec( const Instruction& );
-    void instr_inc( const Instruction& );
-    void instr_cmp( const Instruction& );
-    void instr_sbc( const Instruction& );
-    void instr_adc( const Instruction& );
-    void instr_asl( const Instruction&, const InstructionDefinition& );
-    void instr_rol( const Instruction&, const InstructionDefinition& );
-    void instr_ror( const Instruction&, const InstructionDefinition& );
-    void instr_lsr( const Instruction&, const InstructionDefinition& );
-    void instr_ora( const Instruction& );
-    void instr_and( const Instruction& );
-    void instr_eor( const Instruction& );
+    uint8_t instr_dec( const Instruction& );
+    uint8_t instr_inc( const Instruction& );
+    void instr_cmp( const Instruction&, uint8_t );
+    void instr_sbc( const Instruction&, uint8_t );
+    void instr_adc( const Instruction&, uint8_t );
+    uint8_t instr_asl( const Instruction&, const InstructionDefinition& );
+    uint8_t instr_rol( const Instruction&, const InstructionDefinition& );
+    uint8_t instr_ror( const Instruction&, const InstructionDefinition& );
+    uint8_t instr_lsr( const Instruction&, const InstructionDefinition& );
+    void instr_ora( const Instruction&, uint8_t );
+    void instr_and( const Instruction&, uint8_t );
+    void instr_eor( const Instruction&, uint8_t );
 
     std::set<uint16_t> read_watch;
     std::set<uint16_t> write_watch;

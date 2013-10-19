@@ -73,9 +73,11 @@ int main( int argc, char *argv[] )
         logFile.open( logFilePath.c_str() );
     }
 
+    ppu.cycles = 0;
+
     while ( true ) {
         // expected processor state in testMode
-        unsigned int addr, regA, regX, regY, regP, regSP;
+        unsigned int addr, regA, regX, regY, regP, regSP, cyc;
         if ( testMode ) {
             // log line
             std::string line;
@@ -93,12 +95,14 @@ int main( int argc, char *argv[] )
             std::string reg_y_str = line.substr(60,2);
             std::string reg_p_str = line.substr(65,2);
             std::string reg_sp_str = line.substr(71,2);
+            std::string cyc_str = line.substr(78,3);
             sscanf( log_pc_str.c_str(), "%04X", &addr );
             sscanf( reg_a_str.c_str(), "%04X", &regA );
             sscanf( reg_x_str.c_str(), "%04X", &regX );
             sscanf( reg_y_str.c_str(), "%04X", &regY );
             sscanf( reg_p_str.c_str(), "%04X", &regP );
             sscanf( reg_sp_str.c_str(), "%04X", &regSP );
+            sscanf( cyc_str.c_str(), "%d", &cyc );
         }
 
         Instruction instr = cpu.decode( cpu.pc );
@@ -107,7 +111,7 @@ int main( int argc, char *argv[] )
         printf("%04X\t", cpu.pc);
         std::cout << instr;
 
-        printf("\tA:%02X X:%02X Y:%02X P:%02X SP:%02X CPU:%d\n", cpu.regA, cpu.regX, cpu.regY, cpu.status, cpu.sp, cpu.cycles );
+        printf("\tA:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%d\n", cpu.regA, cpu.regX, cpu.regY, cpu.status, cpu.sp, ppu.cycles );
 
         if ( testMode ) {
             if ( (cpu_pc != addr ) ||
@@ -115,14 +119,16 @@ int main( int argc, char *argv[] )
                  (cpu.regX != regX) ||
                  (cpu.regY != regY) ||
                  (cpu.status != regP ) ||
-                 (cpu.sp != regSP )) {
+                 (cpu.sp != regSP ) ||
+                 (ppu.cycles != cyc  )) {
                 printf("Wrong status!\n");
-                printf("Expected: %04X A:%02X X:%02X Y:%02X P:%02X SP:%02X\n", addr, regA, regX, regY, regP, regSP );
+                printf("Expected: %04X A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%d\n", addr, regA, regX, regY, regP, regSP, cyc );
                 break;
             }
         }
         
 
+        cpu.cycles = 0;
         cpu.pc += instr.nOperands + 1;
         bool pause = false;
         try {
@@ -141,6 +147,14 @@ int main( int argc, char *argv[] )
         }
         if ( pause ) {
             std::cin.get();
+        }
+
+        printf("cpu cycles:%d\n", cpu.cycles);
+        
+        while ( cpu.cycles ) {
+            // ppu cycle
+            ppu.cycles = (ppu.cycles + 3) % 341; // the PPU is 3 times faster than the PPU on NTSC
+            cpu.cycles--;
         }
 
         ppu.frame();

@@ -532,6 +532,8 @@ uint8_t CPU::resolveAddressing( const Instruction& instr )
 
     switch ( def.addressing )
     {
+    case InstructionDefinition::ADDRESSING_NONE:
+        break;
     case InstructionDefinition::ADDRESSING_IMMEDIATE:
         return instr.operand1;
         break;
@@ -700,32 +702,33 @@ void CPU::updateNStatus( uint8_t v )
     }
 }
 
-void CPU::instr_dec( const Instruction& instr )
+uint8_t CPU::instr_dec( const Instruction& instr )
 {
     // decrement memory
-    uint8_t v = resolveAddressing( instr );
-    v--;
     uint16_t addr = resolveWAddressing( instr );
+    uint8_t v = readMem8( addr );
+    v--;
     writeMem8( addr, v );
     updateZStatus( v );
     updateNStatus( v );
+    return v;
 }
 
-void CPU::instr_inc( const Instruction& instr )
+uint8_t CPU::instr_inc( const Instruction& instr )
 {
     // increment memory
-    uint8_t v = resolveAddressing( instr );
-    v++;
     uint16_t addr = resolveWAddressing( instr );
+    uint8_t v = readMem8( addr );
+    v++;
     writeMem8( addr, v );
     updateZStatus( v );
     updateNStatus( v );
+    return v;
 }
 
-void CPU::instr_cmp( const Instruction& instr )
+void CPU::instr_cmp( const Instruction& instr, uint8_t mem )
 {
         // CMP regA  operand
-        uint8_t mem = resolveAddressing( instr );
         int16_t d = regA - mem;
         if ( d >= 0 ) {
             status |= FLAG_C_MASK;
@@ -738,10 +741,9 @@ void CPU::instr_cmp( const Instruction& instr )
         updateNStatus(d);
 }
 
-void CPU::instr_sbc( const Instruction& instr )
+void CPU::instr_sbc( const Instruction& instr, uint8_t mem )
 {
     // substract with not carry A-M-(1-C)
-    uint8_t mem = resolveAddressing( instr );
     uint16_t s = regA - mem - ((status & FLAG_C_MASK) ? 0 : 1);
     int16_t s2 = (int8_t)regA - (int8_t)mem - ((status & FLAG_C_MASK) ? 0 : 1);
     if ( s <= 0xFF ) {
@@ -762,10 +764,9 @@ void CPU::instr_sbc( const Instruction& instr )
     }
 }
 
-void CPU::instr_adc( const Instruction& instr )
+void CPU::instr_adc( const Instruction& instr, uint8_t mem )
 {
     // add with carry A+M+C
-    uint8_t mem = resolveAddressing( instr );
     uint16_t s = regA + mem + ((status & FLAG_C_MASK) ? 1 : 0);
     int16_t s2 = (int8_t)regA + (int8_t)mem + ((status & FLAG_C_MASK) ? 1 : 0);
     if ( s > 0xFF ) {
@@ -786,7 +787,7 @@ void CPU::instr_adc( const Instruction& instr )
     }
 }
 
-void CPU::instr_asl( const Instruction& instr, const InstructionDefinition& def )
+uint8_t CPU::instr_asl( const Instruction& instr, const InstructionDefinition& def )
 {
     // arithmetic shift left
     bool isAccu = def.addressing == InstructionDefinition::ADDRESSING_ACCUMULATOR;
@@ -812,9 +813,10 @@ void CPU::instr_asl( const Instruction& instr, const InstructionDefinition& def 
     }
     updateNStatus( v );
     updateZStatus( v );
+    return v;
 }
 
-void CPU::instr_rol( const Instruction& instr, const InstructionDefinition& def )
+uint8_t CPU::instr_rol( const Instruction& instr, const InstructionDefinition& def )
 {
     // rotate left
     bool isAccu = def.addressing == InstructionDefinition::ADDRESSING_ACCUMULATOR;
@@ -841,9 +843,10 @@ void CPU::instr_rol( const Instruction& instr, const InstructionDefinition& def 
     }
     updateNStatus( v );
     updateZStatus( v );
+    return v;
 }
 
-void CPU::instr_ror( const Instruction& instr, const InstructionDefinition& def )
+uint8_t CPU::instr_ror( const Instruction& instr, const InstructionDefinition& def )
 {
     // rotate right
     bool isAccu = def.addressing == InstructionDefinition::ADDRESSING_ACCUMULATOR;
@@ -869,8 +872,9 @@ void CPU::instr_ror( const Instruction& instr, const InstructionDefinition& def 
     }
     updateNStatus( v );
     updateZStatus( v );
+    return v;
 }
-void CPU::instr_lsr( const Instruction& instr, const InstructionDefinition& def )
+uint8_t CPU::instr_lsr( const Instruction& instr, const InstructionDefinition& def )
 {
     // logical shift right
     bool isAccu = def.addressing == InstructionDefinition::ADDRESSING_ACCUMULATOR;
@@ -895,28 +899,26 @@ void CPU::instr_lsr( const Instruction& instr, const InstructionDefinition& def 
     }
     updateNStatus( v );
     updateZStatus( v );
+    return v;
 }
-void CPU::instr_ora( const Instruction& instr )
+void CPU::instr_ora( const Instruction& instr, uint8_t mem )
 {
     // OR regA & operand
-    uint8_t mem = resolveAddressing( instr );
     regA = regA | mem;
     updateZStatus(regA);
     updateNStatus(regA);
 }
 
-void CPU::instr_eor( const Instruction& instr )
+void CPU::instr_eor( const Instruction& instr, uint8_t mem )
 {
     // XOR regA & operand
-    uint8_t mem = resolveAddressing( instr );
     regA = regA ^ mem;
     updateZStatus(regA);
     updateNStatus(regA);
 }
-void CPU::instr_and( const Instruction& instr )
+void CPU::instr_and( const Instruction& instr, uint8_t mem )
 {
     // AND regA & operand
-    uint8_t mem = resolveAddressing( instr );
     regA = regA & mem;
     updateZStatus(regA);
     updateNStatus(regA);
@@ -1156,19 +1158,19 @@ void CPU::execute( const Instruction& instr )
         break;
     }
     case InstructionDefinition::MNEMONIC_AND: {
-        instr_and( instr );
+        instr_and( instr, resolveAddressing( instr ) );
         break;
     }
     case InstructionDefinition::MNEMONIC_ORA: {
-        instr_ora( instr );
+        instr_ora( instr, resolveAddressing( instr ) );
         break;
     }
     case InstructionDefinition::MNEMONIC_EOR: {
-        instr_eor( instr );
+        instr_eor( instr, resolveAddressing( instr ) );
         break;
     }
     case InstructionDefinition::MNEMONIC_CMP: {
-        instr_cmp( instr );
+        instr_cmp( instr, resolveAddressing( instr ) );
         break;
     }
     case InstructionDefinition::MNEMONIC_CPX: {
@@ -1202,11 +1204,11 @@ void CPU::execute( const Instruction& instr )
         break;
     }
     case InstructionDefinition::MNEMONIC_ADC: {
-        instr_adc( instr );
+        instr_adc( instr, resolveAddressing( instr ) );
         break;
     }
     case InstructionDefinition::MNEMONIC_SBC: {
-        instr_sbc( instr );
+        instr_sbc( instr, resolveAddressing( instr ) );
         break;
     }
     case InstructionDefinition::MNEMONIC_INC: {
@@ -1315,38 +1317,38 @@ void CPU::execute( const Instruction& instr )
         break;
     }
     case InstructionDefinition::MNEMONIC_DCP: {
-        instr_dec( instr );
-        instr_cmp( instr );
+        // DEC then CMP
+        instr_cmp( instr, instr_dec( instr ) );
         break;
     }
     case InstructionDefinition::MNEMONIC_ISC: {
         // INC then SBC
-        instr_inc( instr );
-        instr_sbc( instr );
+        instr_sbc( instr, instr_inc( instr ) );
         break;
     }
     case InstructionDefinition::MNEMONIC_SLO: {
         // ASL then ORA
-        instr_asl( instr, def );
-        instr_ora( instr );
+        instr_ora( instr, instr_asl( instr, def ) );
         break;
     }
     case InstructionDefinition::MNEMONIC_RLA: {
         // ROL then AND
-        instr_rol( instr, def );
-        instr_and( instr );
+        instr_and( instr, instr_rol( instr, def ) );
         break;
     }
     case InstructionDefinition::MNEMONIC_SRE: {
         // LSR and EOR
-        instr_lsr( instr, def );
-        instr_eor( instr );
+        instr_eor( instr, instr_lsr( instr, def ) );
         break;
     }
     case InstructionDefinition::MNEMONIC_RRA: {
         // ROR then ADC
-        instr_ror( instr, def );
-        instr_adc( instr );
+        instr_adc( instr, instr_ror( instr, def ) );
+        break;
+    }
+    case InstructionDefinition::MNEMONIC_NOP: {
+        // Do nothing, but resolve addressing (for cycles)
+        resolveAddressing( instr );
         break;
     }
     }
