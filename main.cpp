@@ -40,7 +40,6 @@ int main( int argc, char *argv[] )
     CPU cpu;
 
     cpu.pc = baseAddr;
-    //    cpu.pc = (memory[0xfffd] << 8) | memory[0xfffc];
     cpu.sp = 0xFD;
     cpu.status = 0x24;
     cpu.regA = 0;
@@ -64,6 +63,9 @@ int main( int argc, char *argv[] )
         cpu.addOnBus( 0x2000+i, &ppu, 0x2000+i );
     }
 
+    // load CHR
+    nesFile.read( (char*)&ppu.memory()[0], 8192 );
+
     bool stepByStep = false;
 
     // compare to log file
@@ -73,7 +75,7 @@ int main( int argc, char *argv[] )
         logFile.open( logFilePath.c_str() );
     }
 
-    ppu.cycles = 0;
+    cpu.pc = (cpu.readMem8(0xfffd) << 8) | cpu.readMem8(0xfffc);
 
     while ( true ) {
         // expected processor state in testMode
@@ -111,7 +113,7 @@ int main( int argc, char *argv[] )
         printf("%04X\t", cpu.pc);
         std::cout << instr;
 
-        printf("\tA:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%d\n", cpu.regA, cpu.regX, cpu.regY, cpu.status, cpu.sp, ppu.cycles );
+        printf("\tA:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%d\n", cpu.regA, cpu.regX, cpu.regY, cpu.status, cpu.sp, ppu.ticks() );
 
         if ( testMode ) {
             if ( (cpu_pc != addr ) ||
@@ -120,7 +122,7 @@ int main( int argc, char *argv[] )
                  (cpu.regY != regY) ||
                  (cpu.status != regP ) ||
                  (cpu.sp != regSP ) ||
-                 (ppu.cycles != cyc  )) {
+                 (ppu.ticks() != cyc  )) {
                 printf("Wrong status!\n");
                 printf("Expected: %04X A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%d\n", addr, regA, regX, regY, regP, regSP, cyc );
                 break;
@@ -151,13 +153,12 @@ int main( int argc, char *argv[] )
 
         printf("cpu cycles:%d\n", cpu.cycles);
         
-        while ( cpu.cycles ) {
+        while ( cpu.cycles-- ) {
             // ppu cycle
-            ppu.cycles = (ppu.cycles + 3) % 341; // the PPU is 3 times faster than the PPU on NTSC
-            cpu.cycles--;
+            ppu.tick();
+            ppu.tick();
+            ppu.tick();
         }
-
-        ppu.frame();
     }
     std::cout << "End" << std::endl;
 

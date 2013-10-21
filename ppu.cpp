@@ -1,8 +1,11 @@
 #include <stdexcept>
-
+#include <iostream>
 #include "ppu.hpp"
 
-PPU::PPU()
+PPU::PPU() : mem_( 8192 ), // 8kb CHR
+             screen_( 240*256 ),
+             ticks_(0),
+             scanline_(0)
 {
     // init SDL
     SDL_Init( SDL_INIT_VIDEO );
@@ -24,22 +27,98 @@ PPU::~PPU()
 
 void PPU::frame()
 {
-    SDL_Event e;
-    if ( SDL_PollEvent(&e) ) {
-        if ( e.type == SDL_QUIT ) {
-            exit(0);
-        }
-    }
     SDL_RenderClear(renderer_);
     //    SDL_RenderCopy(renderer_, tex, NULL, NULL);
     SDL_RenderPresent(renderer_);
+#if 0
+    //
+    for ( int k = 0; k < 256; k++ ) {
+        printf("%d\n", k);
+        for ( int i = 0; i < 8; i++ ) {
+            uint8_t spA = mem_[k*16+i+0];
+            uint8_t spB = mem_[k*16+i+1];
+            for ( int j = 7; j >= 0; j-- ) {
+                char p = ((spA & (1 << j)) >> j) | (((spB & (1 << j)) >> j) << 1);
+                printf("%c", ".XOM"[p]);
+            }
+            printf("\n");
+        }
+    }
+#endif
+
+    // read nametable
+    for ( int x = 0; x < 32; x++ ) {
+        for ( int y = 0; y < 30; y++ ) {
+            uint8_t idx = mem_[ 0x2400 + y*32+x ];
+            printf("%02x", idx);
+        }
+        printf("\n");
+    }
+}
+
+void PPU::tick()
+{
+    if ( (scanline_ == 0) && (ticks_ == 0) ) {
+        frame();
+        std::cin.get();
+    }
+
+    ticks_ = (ticks_ + 1) % 341;
+    if (ticks_ == 0 ) {
+        if ( scanline_ == 0 ) {
+            SDL_Event e;
+            if ( SDL_PollEvent(&e) ) {
+                if ( e.type == SDL_QUIT ) {
+                    exit(0);
+                }
+            }
+        }
+        scanline_ = (scanline_ + 1) % 262;
+    }
+
+    if ( (ticks_ == 1) && (scanline_ == 241) ) {
+        status_.bits.vblank = 1;
+    }
+    if ( (ticks_ == 1) && (scanline_ == 261) ) {
+        status_.bits.vblank = 0;
+    }
 }
 
 uint8_t PPU::read( uint16_t addr ) const
 {
+    if ( addr == PPUStatus ) {
+        uint8_t c = status_.raw;
+        status_.bits.vblank = 0;
+        return c;
+    }
+    else if ( addr == PPUData ) {
+        uint8_t b = mem_[ ppuaddr % mem_.size() ];
+        ppuaddr = ppuaddr + (ctrl_.bits.vram_increment ? 32 : 1 );
+        return b;
+    }
+    printf("read %04X\n", addr);
+    std::cin.get();
     return 0;
 }
 
 void PPU::write( uint16_t addr, uint8_t val )
 {
+    if ( addr == PPUCtrl ) {
+        ctrl_.raw = val;
+    }
+    else if ( addr == PPUMask ) {
+        ctrl_.raw = val;
+    }
+    else if ( addr == PPUAddr ) {
+        ppuaddr = (ppuaddr << 8) | val;
+    }
+    else if ( addr == PPUData ) {
+        printf("PPU data write to %04X <= %02X\n", ppuaddr, val);
+        mem_[ ppuaddr % mem_.size() ] = val;
+        ppuaddr = ppuaddr + (ctrl_.bits.vram_increment ? 32 : 1 );
+    }
+    else {
+        printf("write %04X <= %02X\n", addr, val);
+        std::cin.get();
+    }
 }
