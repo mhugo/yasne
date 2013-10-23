@@ -10,6 +10,18 @@
 #define MEM_SIZE 65536
 uint8_t* memory;
 
+void print_context( CPU& cpu, uint16_t base, int n )
+{
+    uint16_t addr = base;
+    for ( int i = 0; i < n ; i++ ) {
+        Instruction instr = cpu.decode( addr );
+
+        printf("%04X\t", addr);
+        std::cout << instr << std::endl;
+        addr += instr.nOperands + 1;
+    }
+}
+
 int main( int argc, char *argv[] )
 {
     iNESHeader header;
@@ -32,8 +44,8 @@ int main( int argc, char *argv[] )
     memory = &mem[0];
     memset( memory, 0xFF, MEM_SIZE );
 
-    std::vector<uint8_t> rom(16384);
-    nesFile.read( (char*)&rom[0], 16384 );
+    std::vector<uint8_t> rom(16384 * header.PRGRomSize);
+    nesFile.read( (char*)&rom[0], 16384 * header.PRGRomSize);
 
     InstructionDefinition::initTable();
 
@@ -66,7 +78,7 @@ int main( int argc, char *argv[] )
     // load CHR
     nesFile.read( (char*)&ppu.memory()[0], 8192 );
 
-    bool stepByStep = false;
+    bool stepMode = false;
 
     // compare to log file
     std::ifstream logFile;
@@ -77,7 +89,11 @@ int main( int argc, char *argv[] )
 
     cpu.pc = (cpu.readMem8(0xfffd) << 8) | cpu.readMem8(0xfffc);
 
+    bool pause = false;
+    uint16_t breakAddr = 0;
+    bool breakMode = false;
     while ( true ) {
+
         // expected processor state in testMode
         unsigned int addr, regA, regX, regY, regP, regSP, cyc;
         if ( testMode ) {
@@ -107,14 +123,58 @@ int main( int argc, char *argv[] )
             sscanf( cyc_str.c_str(), "%d", &cyc );
         }
 
-        Instruction instr = cpu.decode( cpu.pc );
+        if ( stepMode ) {
+            pause = true;
+        }
+        if ( breakMode && breakAddr == cpu.pc ) {
+            pause = true;
+        }
+        if ( ppu.ticks() == 0 && ppu.scanline() == 0 ) {
+            pause = true;
+        }
+        if ( pause ) {
+            print_context( cpu, cpu.pc, 4 );
+
+            printf("\tA:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%d\n", cpu.regA, cpu.regX, cpu.regY, cpu.status, cpu.sp, ppu.ticks() );
+
+
+            do {
+                char command;
+                char cr;
+                std::cin.get( command );
+                std::cin.get( cr );
+                switch ( command )
+                {
+                case 's':
+                    stepMode = true;
+                    pause = false;
+                    break;
+                case 'r':
+                    stepMode = false;
+                    pause = false;
+                    break;
+                case 'b': {
+                    stepMode = false;
+                    pause = false;
+                    breakMode = true;
+                    unsigned int b;
+                    scanf("%04X", &b );
+                    breakAddr = b;
+                    break;
+                }
+                case 'v':
+                    ppu.print_context();
+                    continue;
+                    break;
+                case 'q':
+                    return 0;
+                    break;
+                }
+            } while (false);
+
         uint16_t cpu_pc = cpu.pc;
-
-        printf("%04X\t", cpu.pc);
-        std::cout << instr;
-
-        printf("\tA:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%d\n", cpu.regA, cpu.regX, cpu.regY, cpu.status, cpu.sp, ppu.ticks() );
-
+        Instruction instr = cpu.decode( cpu.pc );
+        
         if ( testMode ) {
             if ( (cpu_pc != addr ) ||
                  (cpu.regA != regA) ||
@@ -132,7 +192,6 @@ int main( int argc, char *argv[] )
 
         cpu.cycles = 0;
         cpu.pc += instr.nOperands + 1;
-        bool pause = false;
         try {
             cpu.execute( instr );
         }
@@ -144,15 +203,6 @@ int main( int argc, char *argv[] )
             std::cout << "Write watch triggered" << std::endl;
             pause = true;
         }
-        if ( stepByStep ) {
-            pause = true;
-        }
-        if ( pause ) {
-            std::cin.get();
-        }
-
-        printf("cpu cycles:%d\n", cpu.cycles);
-        
         while ( cpu.cycles-- ) {
             // ppu cycle
             ppu.tick();

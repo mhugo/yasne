@@ -25,11 +25,8 @@ PPU::~PPU()
     SDL_Quit();
 }
 
-void PPU::frame()
+void PPU::print_context()
 {
-    SDL_RenderClear(renderer_);
-    //    SDL_RenderCopy(renderer_, tex, NULL, NULL);
-    SDL_RenderPresent(renderer_);
 #if 0
     //
     for ( int k = 0; k < 256; k++ ) {
@@ -45,22 +42,32 @@ void PPU::frame()
         }
     }
 #endif
+    printf("status: %04X ctrl: %04X mask: %04X\n", status_.raw, ctrl_.raw, mask_.raw );
+
+    uint16_t nametable = (ctrl_.bits.nametable << 10) | 0x2000;
+    printf("%04X\n", nametable);
 
     // read nametable
     for ( int x = 0; x < 32; x++ ) {
         for ( int y = 0; y < 30; y++ ) {
-            uint8_t idx = mem_[ 0x2400 + y*32+x ];
+            uint8_t idx = mem_[ nametable + y*32+x ];
             printf("%02x", idx);
         }
         printf("\n");
     }
 }
 
+void PPU::frame()
+{
+    SDL_RenderClear(renderer_);
+    //    SDL_RenderCopy(renderer_, tex, NULL, NULL);
+    SDL_RenderPresent(renderer_);
+}
+
 void PPU::tick()
 {
     if ( (scanline_ == 0) && (ticks_ == 0) ) {
         frame();
-        std::cin.get();
     }
 
     ticks_ = (ticks_ + 1) % 341;
@@ -97,7 +104,7 @@ uint8_t PPU::read( uint16_t addr ) const
         return b;
     }
     printf("read %04X\n", addr);
-    std::cin.get();
+    //    std::cin.get();
     return 0;
 }
 
@@ -107,7 +114,7 @@ void PPU::write( uint16_t addr, uint8_t val )
         ctrl_.raw = val;
     }
     else if ( addr == PPUMask ) {
-        ctrl_.raw = val;
+        mask_.raw = val;
     }
     else if ( addr == PPUAddr ) {
         ppuaddr = (ppuaddr << 8) | val;
@@ -117,8 +124,11 @@ void PPU::write( uint16_t addr, uint8_t val )
         mem_[ ppuaddr % mem_.size() ] = val;
         ppuaddr = ppuaddr + (ctrl_.bits.vram_increment ? 32 : 1 );
     }
+    else if ( addr == PPUScroll ) {
+        scroll_.raw = ( scroll_.raw << 8) | val;
+    }
     else {
         printf("write %04X <= %02X\n", addr, val);
-        std::cin.get();
+        //        std::cin.get();
     }
 }

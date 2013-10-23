@@ -32,6 +32,8 @@ class PPU : public BusDevice
     // current scanline
     int scanline() const { return scanline_; }
 
+    void print_context();
+
  private:
     // 8 registers
     uint8_t regs[8];
@@ -112,6 +114,16 @@ class PPU : public BusDevice
         uint8_t raw;
     };
     Mask mask_;
+
+    union Scroll {
+        struct
+        {
+            uint8_t x;
+            uint8_t y;
+        } bits;
+        uint16_t raw;
+    };
+    Scroll scroll_;
 
     mutable uint16_t ppuaddr;
 };
