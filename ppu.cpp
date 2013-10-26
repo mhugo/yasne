@@ -2,7 +2,7 @@
 #include <iostream>
 #include "ppu.hpp"
 
-PPU::PPU() : mem_( 8192 ), // 8kb CHR
+PPU::PPU() : mem_( 0x4000 ),
              screen_( 240*256 ),
              ticks_(0),
              scanline_(0)

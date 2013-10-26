@@ -1,4 +1,7 @@
+#include <readline/readline.h>
+
 #include <fstream>
+#include <sstream>
 #include <iostream>
 #include <iomanip>
 #include <vector>
@@ -21,6 +24,39 @@ void print_context( CPU& cpu, uint16_t base, int n )
         addr += instr.nOperands + 1;
     }
 }
+
+class Command
+{
+public:
+    Command( const std::string& line )
+    {
+        parse( line );
+    }
+
+    std::string name() const { return name_; }
+
+    size_t n_args() const { return args_.size(); }
+
+    std::string arg( size_t i ) const { return args_[i]; }
+
+private:
+    void parse( const std::string& line )
+    {
+        std::istringstream istr(line);
+        std::string token;
+        for ( size_t i = 0; getline( istr, token, ' ' ); i++ ) {
+            if ( i == 0 ) {
+                name_ = token;
+            }
+            else {
+                args_.push_back( token );
+            }
+        }
+    }
+    
+    std::string name_;
+    std::vector<std::string> args_;
+};
 
 int main( int argc, char *argv[] )
 {
@@ -138,12 +174,12 @@ int main( int argc, char *argv[] )
             printf("\tA:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%d\n", cpu.regA, cpu.regX, cpu.regY, cpu.status, cpu.sp, ppu.ticks() );
 
 
+            bool doContinue;
             do {
-                char command;
-                char cr;
-                std::cin.get( command );
-                std::cin.get( cr );
-                switch ( command )
+                doContinue = false;
+                std::string line( readline( "(dbg) " ) );
+                Command command( line );
+                switch ( command.name()[0] )
                 {
                 case 's':
                     stepMode = true;
@@ -158,19 +194,20 @@ int main( int argc, char *argv[] )
                     pause = false;
                     breakMode = true;
                     unsigned int b;
-                    scanf("%04X", &b );
+                    sscanf( command.arg(0).c_str(), "%04X", &b );
                     breakAddr = b;
                     break;
                 }
                 case 'v':
                     ppu.print_context();
-                    continue;
+                    doContinue = true;
                     break;
                 case 'q':
                     return 0;
                     break;
                 }
-            } while (false);
+            } while ( doContinue );
+        }
 
         uint16_t cpu_pc = cpu.pc;
         Instruction instr = cpu.decode( cpu.pc );
@@ -188,7 +225,6 @@ int main( int argc, char *argv[] )
                 break;
             }
         }
-        
 
         cpu.cycles = 0;
         cpu.pc += instr.nOperands + 1;
