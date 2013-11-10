@@ -32,6 +32,13 @@ class PPU : public BusDevice
     // current scanline
     int scanline() const { return scanline_; }
 
+    //
+    // fills a 8x8 bytes pattern
+    // idx: pattern index
+    // ptr: memory address to fill
+    // row_length: length of a memory row
+    void get_pattern( int idx, uint8_t* ptr, int row_length );
+
     void print_context();
 
  private:

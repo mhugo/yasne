@@ -57,11 +57,55 @@ void PPU::print_context()
     }
 }
 
+void PPU::get_pattern( int idx, uint8_t* ptr, int row_length )
+{
+    for ( int i = 0; i < 8; i++ ) {
+        uint8_t spA = mem_[idx*16+i+0];
+        uint8_t spB = mem_[idx*16+i+1];
+        for ( int j = 7; j >= 0; j-- ) {
+            uint8_t p = ((spA & (1 << j)) >> j) | (((spB & (1 << j)) >> j) << 1);
+            *ptr++ = p * 64;
+        }
+        ptr += row_length-8;
+    }
+}
+
 void PPU::frame()
 {
+    // browse nametable
+    uint16_t nametable = (ctrl_.bits.nametable << 10) | 0x2000;
+
+    // TODO : add scroll
+
+    // read nametable
+    for ( int y = 0; y < 30; y++ ) {
+        for ( int x = 0; x < 32; x++ ) {
+            uint8_t idx = mem_[ nametable + y*32+x ];
+            get_pattern( idx, &screen_[0] + y*8*8*32 + x*8, 32*8 );
+        }
+    }
+
+    SDL_Surface* surf = SDL_CreateRGBSurfaceFrom( &screen_[0],
+                                                  32*8,
+                                                  30*8,
+                                                  8,
+                                                  32*8,
+                                                  0,
+                                                  0,
+                                                  0,
+                                                  0);
+    SDL_Palette *palette = surf->format->palette;
+    for ( int i = 0; i < palette->ncolors; i++ ) {
+        palette->colors[i].r = i;
+        palette->colors[i].g = i;
+        palette->colors[i].b = 255-i;
+    }
+    SDL_Texture* tex = SDL_CreateTextureFromSurface( renderer_, surf );
+
     SDL_RenderClear(renderer_);
-    //    SDL_RenderCopy(renderer_, tex, NULL, NULL);
+    SDL_RenderCopy(renderer_, tex, NULL, NULL);
     SDL_RenderPresent(renderer_);
+    SDL_FreeSurface( surf );
 }
 
 void PPU::tick()
