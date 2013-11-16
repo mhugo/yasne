@@ -98,7 +98,7 @@ int main( int argc, char *argv[] )
 
     //    cpu.addWriteWatch( 0 );
 
-    ROM romDevice( 16384, &rom[0] );
+    ROM romDevice( rom.size(), &rom[0] );
     RAM ramDevice( 2048 );
     PPU ppu;
 
@@ -106,7 +106,8 @@ int main( int argc, char *argv[] )
     cpu.addOnBus( 0x0800, &ramDevice, 0x0800 );
     cpu.addOnBus( 0x1000, &ramDevice, 0x1000 );
     cpu.addOnBus( 0x1800, &ramDevice, 0x1800 );
-    cpu.addOnBus( 0xC000, &romDevice, 0xC000 );
+    uint16_t romAddr = 0x10000 - rom.size();
+    cpu.addOnBus( romAddr, &romDevice, romAddr );
     for ( int i = 0; i < 0x2000 / 8; i += 8 ) {
         cpu.addOnBus( 0x2000+i, &ppu, 0x2000+i );
     }
