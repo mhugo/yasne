@@ -303,6 +303,13 @@ struct CPU
 
     Instruction decode( uint16_t pc ) const;
 
+    ///
+    void reset();
+
+    ///
+    /// NMI
+    void triggerNMI();
+
 private:
     uint8_t instr_dec( const Instruction& );
     uint8_t instr_inc( const Instruction& );

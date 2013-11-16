@@ -114,6 +114,8 @@ int main( int argc, char *argv[] )
     // load CHR
     nesFile.read( (char*)&ppu.memory()[0], 8192 );
 
+    cpu.reset();
+
     bool stepMode = false;
 
     // compare to log file
@@ -122,8 +124,6 @@ int main( int argc, char *argv[] )
         std::string logFilePath = argv[2];
         logFile.open( logFilePath.c_str() );
     }
-
-    cpu.pc = (cpu.readMem8(0xfffd) << 8) | cpu.readMem8(0xfffc);
 
     bool pause = false;
     uint16_t breakAddr = 0;

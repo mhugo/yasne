@@ -383,6 +383,18 @@ void InstructionDefinition::initTable()
     }
 }
 
+void CPU::reset()
+{
+    pc = (readMem8(0xfffd) << 8) | readMem8(0xfffc);
+}
+
+void CPU::triggerNMI()
+{
+    push( pc );
+    pushByte( status );
+    pc = (readMem8(0xfffb) << 8) | readMem8(0xfffa);
+}
+
 void CPU::addOnBus( uint16_t addr, BusDevice* dev, uint16_t offset )
 {
     busDevice.insert( addr, dev, offset );
