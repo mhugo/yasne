@@ -2,6 +2,8 @@
 #include "SDL.h"
 #include "bus_device.hpp"
 
+class CPU;
+
 class PPU : public BusDevice
 {
  public:
@@ -14,7 +16,7 @@ class PPU : public BusDevice
     static const int PPUAddr =   6;
     static const int PPUData =   7;
 
-    PPU();
+    PPU( CPU* cpu );
     virtual ~PPU();
 
     uint8_t read( uint16_t addr ) const;
@@ -133,4 +135,5 @@ class PPU : public BusDevice
     Scroll scroll_;
 
     mutable uint16_t ppuaddr;
+    CPU* cpu_;
 };

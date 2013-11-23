@@ -1,6 +1,7 @@
 #include <stdexcept>
 #include <iostream>
 #include "ppu.hpp"
+#include "cpu.hpp"
 
 const char NesPalette[][3] = {
     0x7C,0x7C,0x7C,
@@ -69,10 +70,11 @@ const char NesPalette[][3] = {
     0x00,0x00,0x00
 };
 
-PPU::PPU() : mem_( 0x4000 ),
-             screen_( 240*256 ),
-             ticks_(0),
-             scanline_(0)
+PPU::PPU( CPU* cpu ) : mem_( 0x4000 ),
+                       screen_( 240*256 ),
+                       ticks_(0),
+                       scanline_(0),
+                       cpu_( cpu )
 {
     // init SDL
     SDL_Init( SDL_INIT_VIDEO );
@@ -197,6 +199,9 @@ void PPU::tick()
 
     if ( (ticks_ == 1) && (scanline_ == 241) ) {
         status_.bits.vblank = 1;
+        if ( ctrl_.bits.nmi ) {
+            cpu_->triggerNMI();
+        }
     }
     if ( (ticks_ == 1) && (scanline_ == 261) ) {
         status_.bits.vblank = 0;
@@ -205,6 +210,10 @@ void PPU::tick()
 
 uint8_t PPU::read( uint16_t addr ) const
 {
+    if ( addr > 7 ) {
+        printf("Trying to read to PPU register #%x\n", addr );
+        throw OutOfBoundAddress();
+    }
     if ( addr == PPUStatus ) {
         uint8_t c = status_.raw;
         status_.bits.vblank = 0;
@@ -222,6 +231,10 @@ uint8_t PPU::read( uint16_t addr ) const
 
 void PPU::write( uint16_t addr, uint8_t val )
 {
+    if ( addr > 7 ) {
+        printf("Trying to write to PPU register #%x\n", addr );
+        throw OutOfBoundAddress();
+    }
     if ( addr == PPUCtrl ) {
         ctrl_.raw = val;
     }

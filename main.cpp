@@ -9,6 +9,8 @@
 #include "nes_file_importer.hpp"
 #include "cpu.hpp"
 #include "ppu.hpp"
+#include "apu.hpp"
+#include "controller.hpp"
 
 #define MEM_SIZE 65536
 uint8_t* memory;
@@ -100,7 +102,9 @@ int main( int argc, char *argv[] )
 
     ROM romDevice( rom.size(), &rom[0] );
     RAM ramDevice( 2048 );
-    PPU ppu;
+    Controller controller;
+    PPU ppu( &cpu );
+    APU apu( &cpu, &controller );
 
     cpu.addOnBus( 0x0000, &ramDevice, 0x0000 );
     cpu.addOnBus( 0x0800, &ramDevice, 0x0800 );
@@ -111,6 +115,7 @@ int main( int argc, char *argv[] )
     for ( int i = 0; i < 0x2000 / 8; i += 8 ) {
         cpu.addOnBus( 0x2000+i, &ppu, 0x2000+i );
     }
+    cpu.addOnBus( 0x4000, &apu, 0x4000 );
 
     // load CHR
     nesFile.read( (char*)&ppu.memory()[0], 8192 );
