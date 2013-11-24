@@ -5,6 +5,7 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
+#include <algorithm>
 
 #include "nes_file_importer.hpp"
 #include "cpu.hpp"
@@ -97,8 +98,6 @@ int main( int argc, char *argv[] )
     cpu.regY = 0;
     cpu.memory = memory;
     cpu.cycles = 0;
-
-    //    cpu.addWriteWatch( 0 );
 
     ROM romDevice( rom.size(), &rom[0] );
     RAM ramDevice( 2048 );
@@ -206,6 +205,63 @@ int main( int argc, char *argv[] )
                 }
                 case 'v':
                     ppu.print_context();
+                    doContinue = true;
+                    break;
+                // set game controller state
+                case 'k': {
+                    if ( command.n_args() == 0 ) {
+                        controller.print( std::cout );
+                        doContinue = true;
+                        break;
+                    }
+                    int s;
+                    sscanf( command.arg(1).c_str(), "%d", &s );
+                    std::string keyName = command.arg(0);
+                    std::transform( keyName.begin(), keyName.end(), keyName.begin(), tolower );
+                    int key;
+                    if ( keyName == "a" ) {
+                        key = Controller::AButton;
+                    }
+                    else if ( keyName == "b" ) {
+                        key = Controller::BButton;
+                    }
+                    else if ( keyName == "select" ) {
+                        key = Controller::SelectButton;
+                    }
+                    else if ( keyName == "start" ) {
+                        key = Controller::StartButton;
+                    }
+                    else if ( keyName == "up" ) {
+                        key = Controller::UpButton;
+                    }
+                    else if ( keyName == "down" ) {
+                        key = Controller::DownButton;
+                    }
+                    else if ( keyName == "left" ) {
+                        key = Controller::LeftButton;
+                    }
+                    else if ( keyName == "right" ) {
+                        key = Controller::RightButton;
+                    }
+                    controller.setState( 0, key, s == 1 );
+                    controller.print( std::cout );
+                    doContinue = true;
+                    break;
+                }
+                case 'w': // watch
+                    if ( command.n_args() < 2 ) {
+                        printf("w addr r|w: add read/write watch\n");
+                        doContinue = true;
+                        break;
+                    }
+                    unsigned int addr;
+                    sscanf( command.arg(0).c_str(), "%04X", &addr );
+                    if ( command.arg(1)[0] == 'r' ) {
+                        cpu.addReadWatch( addr );
+                    }
+                    else {
+                        cpu.addWriteWatch( addr );
+                    }
                     doContinue = true;
                     break;
                 case 'q':
