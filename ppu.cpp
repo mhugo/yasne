@@ -74,6 +74,7 @@ PPU::PPU( CPU* cpu ) : mem_( 0x4000 ),
                        screen_( 240*256 ),
                        ticks_(0),
                        scanline_(0),
+                       ppuaddr( 0 ),
                        cpu_( cpu )
 {
     // init SDL

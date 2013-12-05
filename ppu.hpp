@@ -65,6 +65,7 @@ class PPU : public BusDevice
             uint8_t vblank : 1;
         } bits;
         uint8_t raw;
+        Status() : raw(0) {}
     };
     mutable Status status_;
 
@@ -95,6 +96,7 @@ class PPU : public BusDevice
             uint8_t nmi                : 1;
         } bits;
         uint8_t raw;
+        Controller() : raw(0) {}
     };
     Controller ctrl_;
 
@@ -121,6 +123,7 @@ class PPU : public BusDevice
             uint8_t intensify_blues          : 1;
         } bits;
         uint8_t raw;
+        Mask() : raw(0) {}
     };
     Mask mask_;
 
