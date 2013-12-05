@@ -294,6 +294,7 @@ struct CPU
 
     struct ReadWatchTriggered {};
     struct WriteWatchTriggered {};
+    struct NotImplemented {};
 
     /// Memory mapping
     /// Connect dev on the memory bus

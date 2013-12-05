@@ -1363,5 +1363,8 @@ void CPU::execute( const Instruction& instr )
         resolveAddressing( instr );
         break;
     }
+    default:
+        std::cout << "Not implemented!\n";
+        throw NotImplemented();
     }
 }
