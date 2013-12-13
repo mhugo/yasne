@@ -112,11 +112,12 @@ void PPU::print_context()
         }
     }
 #endif
-    printf("status: %04X ctrl: %04X mask: %04X\n", status_.raw, ctrl_.raw, mask_.raw );
+    printf("ctrl: %02X mask: %02X status: %02X ticks: %d SL: %d\n", ctrl_.raw, mask_.raw, status_.raw, ticks_, scanline_ );
 
     uint16_t nametable = (ctrl_.bits.nametable << 10) | 0x2000;
     printf("%04X\n", nametable);
 
+#if 0
     // read nametable
     for ( int x = 0; x < 32; x++ ) {
         for ( int y = 0; y < 30; y++ ) {
@@ -125,14 +126,16 @@ void PPU::print_context()
         }
         printf("\n");
     }
+#endif
 }
 
 void PPU::get_pattern( int idx, uint8_t* ptr, int row_length )
 {
     uint8_t* palette = &mem_[ 0x3F00 ];
+    uint16_t baseAddr = ctrl_.bits.background_pattern ? 0x1000 : 0;
     for ( int i = 0; i < 8; i++ ) {
-        uint8_t spA = mem_[idx*16+i+0];
-        uint8_t spB = mem_[idx*16+i+8];
+        uint8_t spA = mem_[baseAddr + idx*16+i+0];
+        uint8_t spB = mem_[baseAddr + idx*16+i+8];
         for ( int j = 7; j >= 0; j-- ) {
             uint8_t p = ((spA & (1 << j)) >> j) | (((spB & (1 << j)) >> j) << 1);
             *ptr++ = palette[p];
