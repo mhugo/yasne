@@ -1,10 +1,15 @@
 #include "apu.hpp"
+#include "cpu.hpp"
 
 APU::APU( CPU* cpu, Controller* controller ) : cpu_(cpu), controller_(controller) {}
 APU::~APU() {}
 
 uint8_t APU::read( uint16_t addr ) const
 {
+    if ( addr == 0x14 ) {
+        printf("DMA reading\n");
+        throw OutOfBoundAddress();
+    }
     if ( addr == 0x16 ) {
         return controller_->readPressed( 0 ) ? 1 : 0;
     }
@@ -20,11 +25,14 @@ uint8_t APU::read( uint16_t addr ) const
 
 void APU::write( uint16_t addr, uint8_t val )
 {
-    if ( addr == 0x16 ) {
+    if ( addr == 0x14 ) {
+        cpu_->doDMA( val << 8 );
+    }
+    else if ( addr == 0x16 ) {
         controller_->setStrobe( val & 1 );
         return;
     }
-    if ( addr > 0x17 ) {
+    else if ( addr > 0x17 ) {
         printf("Trying to write APU register #%x\n", addr );
         throw OutOfBoundAddress();
     }

@@ -311,6 +311,9 @@ struct CPU
     /// NMI
     void triggerNMI();
 
+    // OAM DMA
+    void doDMA( uint16_t startAddr );
+
 private:
     uint8_t instr_dec( const Instruction& );
     uint8_t instr_inc( const Instruction& );

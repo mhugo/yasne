@@ -75,7 +75,8 @@ PPU::PPU( CPU* cpu ) : mem_( 0x4000 ),
                        ticks_(0),
                        scanline_(0),
                        ppuaddr( 0 ),
-                       cpu_( cpu )
+                       cpu_( cpu ),
+                       oam_addr_( 0 )
 {
     // init SDL
     SDL_Init( SDL_INIT_VIDEO );
@@ -127,35 +128,105 @@ void PPU::print_context()
         printf("\n");
     }
 #endif
+
+    printf("OAM:\n");
+    for ( int i = 0; i < 64; ++i ) {
+        printf("%d ", i);
+        uint8_t y   = oam_[ i * 4 + 0 ];
+        uint8_t x   = oam_[ i * 4 + 3 ];
+        uint8_t idx = oam_[ i * 4 + 1 ];
+        uint8_t att = oam_[ i * 4 + 2 ];
+        printf("(%03d,%03d):%02x[%02x]\n", x, y, idx, att);
+    }
 }
 
-void PPU::get_pattern( int idx, uint8_t* ptr, int row_length )
+void PPU::get_pattern( uint16_t baseAddr, int idx, uint8_t* ptr, int row_length, int paletteNum )
 {
-    uint8_t* palette = &mem_[ 0x3F00 ];
-    uint16_t baseAddr = ctrl_.bits.background_pattern ? 0x1000 : 0;
+    uint8_t palette0 = mem_[0x3F00];
+    uint8_t *palette = &mem_[0x3F00 + paletteNum * 4];
     for ( int i = 0; i < 8; i++ ) {
         uint8_t spA = mem_[baseAddr + idx*16+i+0];
         uint8_t spB = mem_[baseAddr + idx*16+i+8];
         for ( int j = 7; j >= 0; j-- ) {
             uint8_t p = ((spA & (1 << j)) >> j) | (((spB & (1 << j)) >> j) << 1);
-            *ptr++ = palette[p];
+            if ( p == 0 ) {
+                *ptr++ = palette0 & 0x1F;
+            }
+            else {
+                *ptr++ = palette[p] & 0x1F;
+            }
         }
         ptr += row_length-8;
     }
 }
 
+void PPU::get_sprite( int idx, uint8_t *ptr )
+{
+    get_pattern( ctrl_.bits.sprite_pattern ? 0x1000 : 0,
+                 idx,
+                 ptr,
+                 8,
+                 4 );
+}
+
 void PPU::frame()
 {
-    // browse nametable
-    uint16_t nametable = (ctrl_.bits.nametable << 10) | 0x2000;
+    if ( mask_.bits.show_background ) {
+        // browse nametable
+        uint16_t nametable = (ctrl_.bits.nametable << 10) | 0x2000;
 
-    // TODO : add scroll
+        // TODO : add scroll
 
-    // read nametable
-    for ( int y = 0; y < 30; y++ ) {
-        for ( int x = 0; x < 32; x++ ) {
-            uint8_t patIdx = mem_[ nametable + y*32+x ];
-            get_pattern( patIdx, &screen_[0] + y*8*(8*32) + x*8, 32*8 );
+        // read nametable
+        for ( int y = 0; y < 30; y++ ) {
+            for ( int x = 0; x < 32; x++ ) {
+                uint8_t pal = mem_[ nametable + 0x3C0 + x/2 + (y/2) * 8];
+                if ( x&1 ) {
+                    if ( y&1 ) {
+                        pal = (pal & 0xC0) >> 6;
+                    }
+                    else {
+                        pal = (pal & 0x0C) >> 2;
+                    }
+                }
+                else {
+                    if ( y&1 ) {
+                        pal = (pal & 0x30) >> 4;
+                    }
+                    else {
+                        pal = (pal & 0x03);
+                    }
+                }
+                uint8_t patIdx = mem_[ nametable + y*32+x ];
+                get_pattern( ctrl_.bits.background_pattern ? 0x1000 : 0,
+                             patIdx,
+                             &screen_[0] + y*8*(8*32) + x*8,
+                             32*8,
+                             pal * 4);
+            }
+        }
+    }
+
+    if ( mask_.bits.show_sprites ) {
+        // TODO deal with 8x16 sprites
+        if ( ! ctrl_.bits.sprites_are_8x16 ) {
+            uint16_t baseAddr = ctrl_.bits.sprite_pattern ? 0x1000 : 0;
+            for ( int i = 0; i < 64; ++i ) {
+                uint8_t y   = oam_[ i * 4 + 0 ];
+                uint8_t x   = oam_[ i * 4 + 3 ];
+                uint8_t idx = oam_[ i * 4 + 1 ];
+                uint8_t att = oam_[ i * 4 + 2 ];
+                if ( y > 0xef ) {
+                    continue;
+                }
+#if 0
+                get_pattern( baseAddr,
+                             idx,
+                             &screen_[0] + y*8*(8*32) + x*8,
+                             32*8,
+                             (att & 0x3) * 4 + 4);
+#endif
+            }
         }
     }
 
@@ -228,6 +299,12 @@ uint8_t PPU::read( uint16_t addr ) const
         ppuaddr = ppuaddr + (ctrl_.bits.vram_increment ? 32 : 1 );
         return b;
     }
+    else if ( addr == OAMAddr ) {
+        return oam_addr_;
+    }
+    else if ( addr == OAMData ) {
+        return oam_[oam_addr_];
+    }
     printf("read %04X\n", addr);
     //    std::cin.get();
     return 0;
@@ -255,6 +332,12 @@ void PPU::write( uint16_t addr, uint8_t val )
     }
     else if ( addr == PPUScroll ) {
         scroll_.raw = ( scroll_.raw << 8) | val;
+    }
+    else if ( addr == OAMAddr ) {
+        oam_addr_ = val;
+    }
+    else if ( addr == OAMData ) {
+        oam_[oam_addr_++] = val;
     }
     else {
         printf("write %04X <= %02X\n", addr, val);

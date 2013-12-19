@@ -39,7 +39,9 @@ class PPU : public BusDevice
     // idx: pattern index
     // ptr: memory address to fill
     // row_length: length of a memory row
-    void get_pattern( int idx, uint8_t* ptr, int row_length );
+    void get_pattern( uint16_t baseAddr, int idx, uint8_t* ptr, int row_length, int paletteNum );
+
+    void get_sprite( int idx, uint8_t* ptr );
 
     void print_context();
 
@@ -91,7 +93,7 @@ class PPU : public BusDevice
             uint8_t vram_increment     : 1;
             uint8_t sprite_pattern     : 1;
             uint8_t background_pattern : 1;
-            uint8_t sprite_size        : 1;
+            uint8_t sprites_are_8x16   : 1;
             uint8_t ext                : 1;
             uint8_t nmi                : 1;
         } bits;
@@ -139,4 +141,8 @@ class PPU : public BusDevice
 
     mutable uint16_t ppuaddr;
     CPU* cpu_;
+
+    // Object Attribute Memory (sprites)
+    uint8_t oam_[256];
+    uint8_t oam_addr_;
 };

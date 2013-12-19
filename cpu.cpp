@@ -395,6 +395,16 @@ void CPU::triggerNMI()
     pc = (readMem8(0xfffb) << 8) | readMem8(0xfffa);
 }
 
+void CPU::doDMA( uint16_t startAddr )
+{
+    for ( int i = 0; i < 256; ++i ) {
+        uint8_t v = readMem8( startAddr + i );
+        writeMem8( 0x2004, v );
+    }
+    cycles += 513;
+    // TODO add odd frame cycle
+}
+
 void CPU::addOnBus( uint16_t addr, BusDevice* dev, uint16_t offset )
 {
     busDevice.insert( addr, dev, offset );
@@ -516,10 +526,12 @@ uint8_t CPU::readMem8( uint16_t addr, bool quiet ) const
         throw ReadWatchTriggered();
     }
     uint8_t v = busDevice.read( addr );
+#if 0
     if ( !quiet ) {
         std::cout << "@" << std::setw(4) << std::setfill('0') << addr;
         std::cout << " => " << (v+0) << std::endl;
     }
+#endif
     return v;
 }
 
@@ -528,10 +540,12 @@ void CPU::writeMem8( uint16_t addr, uint8_t v, bool quiet )
     if ( addr >= 0x4020 ) {
         throw std::runtime_error( (boost::format("Can't write to %1%") % addr).str() );
     }
+#if 0
     if ( !quiet ) {
         std::cout << "@" << std::setw(4) << std::setfill('0') << addr ;
         std::cout << " <= " << (v+0) << std::endl;
     }
+#endif
     busDevice.write( addr, v );
     if ( write_watch.find( addr ) != write_watch.end() ) {
         throw WriteWatchTriggered();
@@ -1009,7 +1023,6 @@ void CPU::execute( const Instruction& instr )
     case InstructionDefinition::MNEMONIC_JSR: {
         // jump to sub routine
         uint16_t adr = (instr.operand2 << 8) + instr.operand1;
-        std::cout << "pc = " << pc << std::endl;
         push( pc - 1 );
         pc = adr;
         break;

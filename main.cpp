@@ -207,6 +207,26 @@ int main( int argc, char *argv[] )
                     ppu.print_context();
                     doContinue = true;
                     break;
+                case 'p': {
+                    doContinue = true;
+                    // display a sprite
+                    if ( command.n_args() == 0 ) {
+                        break;
+                    }
+                    int s;
+                    uint8_t sprite[8*8];
+                    sscanf( command.arg(0).c_str(), "%x", &s );
+                    ppu.get_sprite( s, sprite );
+                    for ( int y = 0; y < 8; ++y ) {
+                        for ( int x = 0; x < 8; ++x ) {
+                            uint8_t c = sprite[y*8+x];
+                            printf("%02X", c);
+                        }
+                        printf("\n");
+                    }
+                    
+                    break;
+                }
                 // set game controller state
                 case 'k': {
                     if ( command.n_args() == 0 ) {
