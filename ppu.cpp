@@ -178,11 +178,18 @@ void PPU::frame()
         // TODO : add scroll
 
         // read nametable
+        // iterate by block of 8x8
         for ( int y = 0; y < 30; y++ ) {
             for ( int x = 0; x < 32; x++ ) {
-                uint8_t pal = mem_[ nametable + 0x3C0 + x/2 + (y/2) * 8];
-                if ( x&1 ) {
-                    if ( y&1 ) {
+                // 32x32 pixel block coordinates
+                int x32 = x/4;
+                int y32 = y/4;
+                // 16x16 pixel block coordinates
+                int x16 = x/2;
+                int y16 = y/2;
+                uint8_t pal = mem_[ nametable + 0x3C0 + x32 + y32 * 8];
+                if ( x16&1 ) {
+                    if ( y16&1 ) {
                         pal = (pal & 0xC0) >> 6;
                     }
                     else {
@@ -190,7 +197,7 @@ void PPU::frame()
                     }
                 }
                 else {
-                    if ( y&1 ) {
+                    if ( y16&1 ) {
                         pal = (pal & 0x30) >> 4;
                     }
                     else {
@@ -219,13 +226,11 @@ void PPU::frame()
                 if ( y > 0xef ) {
                     continue;
                 }
-#if 0
                 get_pattern( baseAddr,
                              idx,
                              &screen_[0] + y*8*(8*32) + x*8,
                              32*8,
                              (att & 0x3) * 4 + 4);
-#endif
             }
         }
     }
