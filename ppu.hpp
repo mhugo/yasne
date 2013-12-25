@@ -168,4 +168,7 @@ class PPU : public BusDevice
     // temporary screen arrays
     // each cell contains a pixel value
     std::vector<uint8_t> nametable_;
+
+    // SDL texture used for screen framebuffer
+    SDL_Texture *screen_tex_;
 };

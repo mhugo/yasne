@@ -77,7 +77,8 @@ PPU::PPU( CPU* cpu ) : mem_( 0x4000 ),
                        ppuaddr( 0 ),
                        cpu_( cpu ),
                        oam_addr_( 0 ),
-                       nametable_( 240*256 )
+                       nametable_( 240*256 ),
+                       screen_tex_( 0 )
 {
     // init SDL
     SDL_Init( SDL_INIT_VIDEO );
@@ -90,6 +91,12 @@ PPU::PPU( CPU* cpu ) : mem_( 0x4000 ),
     if ( ! renderer_ ) {
         throw std::runtime_error( "create renderer" );
     }
+
+    screen_tex_ = SDL_CreateTexture( renderer_,
+                                     SDL_PIXELFORMAT_RGB24,
+                                     SDL_TEXTUREACCESS_STREAMING,
+                                     32*8,
+                                     30*8 );
 }
 
 PPU::~PPU()
@@ -151,10 +158,10 @@ void PPU::get_pattern( uint16_t baseAddr, int idx, uint8_t* ptr, int row_length,
         for ( int j = 7; j >= 0; j-- ) {
             uint8_t c = ((spA & (1 << j)) >> j) | (((spB & (1 << j)) >> j) << 1);
             if ( c == 0 ) {
-                *ptr++ = palette0;
+                *ptr++ = palette0 & 63;
             }
             else {
-                *ptr++ = palette[c];
+                *ptr++ = palette[c] & 63;
             }
         }
         ptr += row_length-8;
@@ -258,27 +265,21 @@ void PPU::frame()
     // copy temporary screen to screen
     memcpy( &screen_[0], &nametable_[0], 32*30*64 );
 
-    SDL_Surface* surf = SDL_CreateRGBSurfaceFrom( &screen_[0],
-                                                  32*8,
-                                                  30*8,
-                                                  8,
-                                                  32*8,
-                                                  0,
-                                                  0,
-                                                  0,
-                                                  0);
-    SDL_Palette *palette = surf->format->palette;
-    for ( int i = 0; i < 64; i++ ) {
-        palette->colors[i].r = NesPalette[i][0];
-        palette->colors[i].g = NesPalette[i][1];
-        palette->colors[i].b = NesPalette[i][2];
+    {
+        uint8_t *rgb;
+        int pitch;
+        SDL_LockTexture( screen_tex_, NULL, (void**)&rgb, &pitch );
+        for ( size_t i = 0; i < 30*32*8*8; i++ ) {
+            rgb[i*3+0] = NesPalette[screen_[i]][0];
+            rgb[i*3+1] = NesPalette[screen_[i]][1];
+            rgb[i*3+2] = NesPalette[screen_[i]][2];
+        }
+        SDL_UnlockTexture( screen_tex_ );
     }
-    SDL_Texture* tex = SDL_CreateTextureFromSurface( renderer_, surf );
 
     SDL_RenderClear(renderer_);
-    SDL_RenderCopy(renderer_, tex, NULL, NULL);
+    SDL_RenderCopy(renderer_, screen_tex_, NULL, NULL);
     SDL_RenderPresent(renderer_);
-    SDL_FreeSurface( surf );
 }
 
 void PPU::tick()
