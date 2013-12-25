@@ -171,7 +171,7 @@ int main( int argc, char *argv[] )
             pause = true;
         }
         if ( ppu.ticks() == 0 && ppu.scanline() == 0 ) {
-            pause = true;
+            //pause = true;
         }
         if ( pause ) {
             print_context( cpu, cpu.pc, 4 );

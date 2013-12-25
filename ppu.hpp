@@ -17,7 +17,7 @@ class PPU : public BusDevice
     static const int PPUData =   7;
 
     PPU( CPU* cpu );
-    virtual ~PPU();
+    ~PPU();
 
     uint8_t read( uint16_t addr ) const;
     void write( uint16_t addr, uint8_t val );
@@ -164,4 +164,8 @@ class PPU : public BusDevice
     // Object Attribute Memory (sprites)
     uint8_t oam_[256];
     uint8_t oam_addr_;
+
+    // temporary screen arrays
+    // each cell contains a pixel value
+    std::vector<uint8_t> nametable_;
 };

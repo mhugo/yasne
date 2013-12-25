@@ -76,7 +76,8 @@ PPU::PPU( CPU* cpu ) : mem_( 0x4000 ),
                        scanline_(0),
                        ppuaddr( 0 ),
                        cpu_( cpu ),
-                       oam_addr_( 0 )
+                       oam_addr_( 0 ),
+                       nametable_( 240*256 )
 {
     // init SDL
     SDL_Init( SDL_INIT_VIDEO );
@@ -148,12 +149,12 @@ void PPU::get_pattern( uint16_t baseAddr, int idx, uint8_t* ptr, int row_length,
         uint8_t spA = mem_[baseAddr + idx*16+i+0];
         uint8_t spB = mem_[baseAddr + idx*16+i+8];
         for ( int j = 7; j >= 0; j-- ) {
-            uint8_t p = ((spA & (1 << j)) >> j) | (((spB & (1 << j)) >> j) << 1);
-            if ( p == 0 ) {
-                *ptr++ = palette0 & 0x1F;
+            uint8_t c = ((spA & (1 << j)) >> j) | (((spB & (1 << j)) >> j) << 1);
+            if ( c == 0 ) {
+                *ptr++ = palette0;
             }
             else {
-                *ptr++ = palette[p] & 0x1F;
+                *ptr++ = palette[c];
             }
         }
         ptr += row_length-8;
@@ -162,11 +163,15 @@ void PPU::get_pattern( uint16_t baseAddr, int idx, uint8_t* ptr, int row_length,
 
 void PPU::get_sprite( int idx, uint8_t *ptr )
 {
-    get_pattern( ctrl_.bits.sprite_pattern ? 0x1000 : 0,
-                 idx,
-                 ptr,
-                 8,
-                 4 );
+    uint16_t baseAddr = ctrl_.bits.sprite_pattern ? 0x1000 : 0;
+    for ( int i = 0; i < 8; i++ ) {
+        uint8_t spA = mem_[baseAddr + idx*16+i+0];
+        uint8_t spB = mem_[baseAddr + idx*16+i+8];
+        for ( int j = 7; j >= 0; j-- ) {
+            uint8_t c = ((spA & (1 << j)) >> j) | (((spB & (1 << j)) >> j) << 1);
+            *ptr++ = c;
+        }
+    }
 }
 
 void PPU::frame()
@@ -207,9 +212,9 @@ void PPU::frame()
                 uint8_t patIdx = mem_[ nametable + y*32+x ];
                 get_pattern( ctrl_.bits.background_pattern ? 0x1000 : 0,
                              patIdx,
-                             &screen_[0] + y*8*(8*32) + x*8,
+                             &nametable_[0] + y*8*(8*32) + x*8,
                              32*8,
-                             pal * 4);
+                             pal);
             }
         }
     }
@@ -218,6 +223,7 @@ void PPU::frame()
         // TODO deal with 8x16 sprites
         if ( ! ctrl_.bits.sprites_are_8x16 ) {
             uint16_t baseAddr = ctrl_.bits.sprite_pattern ? 0x1000 : 0;
+            uint8_t current_sprite[8*8];
             for ( int i = 0; i < 64; ++i ) {
                 uint8_t y   = oam_[ i * 4 + 0 ];
                 uint8_t x   = oam_[ i * 4 + 3 ];
@@ -226,14 +232,31 @@ void PPU::frame()
                 if ( y > 0xef ) {
                     continue;
                 }
-                get_pattern( baseAddr,
-                             idx,
-                             &screen_[0] + y*8*(8*32) + x*8,
-                             32*8,
-                             (att & 0x3) * 4 + 4);
+                get_sprite( idx, current_sprite );
+                int palNum = (att & 0x3) + 4;
+                uint8_t *palette = &mem_[0x3F00 + palNum * 4];
+
+                // merge sprite and nametable
+                // TODO : sprite priority
+                for ( int yy = 0; yy < 8; yy++ ) {
+                    for ( int xx = 0; xx < 8; xx++ ) {
+                        uint8_t* screen_pixel = &nametable_[0] + (y+yy)*(8*32) + (x+xx);
+                        uint8_t sprite_val = current_sprite[xx+yy*8];
+
+                        if ( sprite_val ) {
+                            if ( i == 0 && *screen_pixel ) {
+                                status_.bits.sprite0_hit = 1;
+                            }
+                            *screen_pixel = palette[sprite_val];
+                        }
+                    }
+                }
             }
         }
     }
+
+    // copy temporary screen to screen
+    memcpy( &screen_[0], &nametable_[0], 32*30*64 );
 
     SDL_Surface* surf = SDL_CreateRGBSurfaceFrom( &screen_[0],
                                                   32*8,
@@ -283,8 +306,11 @@ void PPU::tick()
             cpu_->triggerNMI();
         }
     }
+
+    // pre-render
     if ( (ticks_ == 1) && (scanline_ == 261) ) {
         status_.bits.vblank = 0;
+        status_.bits.sprite0_hit = 0;
     }
 }
 
