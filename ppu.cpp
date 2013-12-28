@@ -80,10 +80,7 @@ PPU::PPU( CPU* cpu ) : mem_( 0x4000 ),
                        nametable_( 240*256 ),
                        screen_tex_( 0 )
 {
-    // init SDL
-    SDL_Init( SDL_INIT_VIDEO );
-
-    win_ = SDL_CreateWindow( "Test", 0, 0, 256, 240, 0 );
+    win_ = SDL_CreateWindow( "Test", 0, 0, 512, 480, 0 );
     if ( ! win_ ) {
         throw std::runtime_error( "create window" );
     }
@@ -290,14 +287,6 @@ void PPU::tick()
 
     ticks_ = (ticks_ + 1) % 341;
     if (ticks_ == 0 ) {
-        if ( scanline_ == 0 ) {
-            SDL_Event e;
-            if ( SDL_PollEvent(&e) ) {
-                if ( e.type == SDL_QUIT ) {
-                    exit(0);
-                }
-            }
-        }
         scanline_ = (scanline_ + 1) % 262;
     }
 
@@ -358,7 +347,7 @@ void PPU::write( uint16_t addr, uint8_t val )
         ppuaddr = (ppuaddr << 8) | val;
     }
     else if ( addr == PPUData ) {
-        printf("PPU data write to %04X <= %02X\n", ppuaddr, val);
+        //        printf("PPU data write to %04X <= %02X\n", ppuaddr, val);
         mem_[ ppuaddr % mem_.size() ] = val;
         ppuaddr = ppuaddr + (ctrl_.bits.vram_increment ? 32 : 1 );
     }

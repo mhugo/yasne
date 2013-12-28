@@ -7,6 +7,8 @@
 #include <vector>
 #include <algorithm>
 
+#include "SDL.h"
+
 #include "nes_file_importer.hpp"
 #include "cpu.hpp"
 #include "ppu.hpp"
@@ -88,6 +90,9 @@ int main( int argc, char *argv[] )
 
     InstructionDefinition::initTable();
 
+    // init SDL
+    SDL_Init( SDL_INIT_VIDEO | SDL_INIT_EVENTS );
+
     CPU cpu;
 
     cpu.pc = baseAddr;
@@ -135,6 +140,44 @@ int main( int argc, char *argv[] )
     bool breakMode = false;
     while ( true ) {
 
+        SDL_Event e;
+        if ( SDL_PollEvent(&e) ) {
+            if ( e.type == SDL_QUIT ) {
+                break;
+            }
+            else if ( e.type == SDL_KEYDOWN || e.type == SDL_KEYUP ) {
+                SDL_KeyboardEvent* ke = (SDL_KeyboardEvent*)(&e);
+                bool pressed = ke->state == SDL_PRESSED;
+                if ( ke->keysym.sym == SDLK_ESCAPE ) {
+                    break;
+                }
+                else if ( ke->keysym.sym == SDLK_RETURN ) {
+                    controller.setState( 0, Controller::StartButton, pressed );
+                }
+                else if ( ke->keysym.sym == SDLK_RIGHT ) {
+                    controller.setState( 0, Controller::RightButton, pressed );
+                }
+                else if ( ke->keysym.sym == SDLK_LEFT ) {
+                    controller.setState( 0, Controller::LeftButton, pressed );
+                }
+                else if ( ke->keysym.sym == SDLK_UP ) {
+                    controller.setState( 0, Controller::UpButton, pressed );
+                }
+                else if ( ke->keysym.sym == SDLK_DOWN ) {
+                    controller.setState( 0, Controller::DownButton, pressed );
+                }
+                else if ( ke->keysym.sym == SDLK_a ) {
+                    controller.setState( 0, Controller::AButton, pressed );
+                }
+                else if ( ke->keysym.sym == SDLK_b ) {
+                    controller.setState( 0, Controller::BButton, pressed );
+                }
+                else if ( ke->keysym.sym == SDLK_d && pressed ) {
+                    pause = true;
+                }
+            }
+        }
+
         // expected processor state in testMode
         unsigned int addr, regA, regX, regY, regP, regSP, cyc;
         if ( testMode ) {
@@ -179,7 +222,7 @@ int main( int argc, char *argv[] )
             printf("\tA:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%d\n", cpu.regA, cpu.regX, cpu.regY, cpu.status, cpu.sp, ppu.ticks() );
 
 
-            bool doContinue;
+            bool doContinue = false;
             do {
                 doContinue = false;
                 std::string line( readline( "(dbg) " ) );
@@ -190,7 +233,7 @@ int main( int argc, char *argv[] )
                     stepMode = true;
                     pause = false;
                     break;
-                case 'r':
+                case 'c': // continue
                     stepMode = false;
                     pause = false;
                     break;
