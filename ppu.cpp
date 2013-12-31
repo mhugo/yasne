@@ -317,6 +317,9 @@ uint8_t PPU::read( uint16_t addr ) const
     }
     else if ( addr == PPUData ) {
         uint8_t b = mem_[ ppuaddr % mem_.size() ];
+        if ( ppuaddr == 0x3F10 || ppuaddr == 0x3F14 || ppuaddr == 0x3F18 || ppuaddr == 0x3F1C ) {
+            b = mem_[ ppuaddr - 0x10 ];
+        }
         ppuaddr = ppuaddr + (ctrl_.bits.vram_increment ? 32 : 1 );
         return b;
     }
@@ -347,11 +350,16 @@ void PPU::write( uint16_t addr, uint8_t val )
         ppuaddr = (ppuaddr << 8) | val;
     }
     else if ( addr == PPUData ) {
-        //        printf("PPU data write to %04X <= %02X\n", ppuaddr, val);
-        mem_[ ppuaddr % mem_.size() ] = val;
+        if ( ppuaddr == 0x3F10 || ppuaddr == 0x3F14 || ppuaddr == 0x3F18 || ppuaddr == 0x3F1C ) {
+            mem_[ ppuaddr - 0x10 ] = val;
+        }
+        else {
+            mem_[ ppuaddr % mem_.size() ] = val;
+        }
         ppuaddr = ppuaddr + (ctrl_.bits.vram_increment ? 32 : 1 );
     }
     else if ( addr == PPUScroll ) {
+        printf("scroll: %d SL:%d tick:%d\n", val, scanline_, tick_);
         scroll_.raw = ( scroll_.raw << 8) | val;
     }
     else if ( addr == OAMAddr ) {
