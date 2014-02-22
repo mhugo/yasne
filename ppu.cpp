@@ -72,11 +72,12 @@ const char NesPalette[][3] = {
 
 PPU::PPU( CPU* cpu ) : mem_( 0x4000 ),
                        screen_( 240*256 ),
-                       ticks_(0),
+                       tick_(0),
                        scanline_(0),
                        ppuaddr( 0 ),
                        cpu_( cpu ),
                        oam_addr_( 0 ),
+                       n_next_sprites_( 0 ),
                        nametable_( 240*256 ),
                        screen_tex_( 0 )
 {
@@ -118,7 +119,14 @@ void PPU::print_context()
         }
     }
 #endif
-    printf("ctrl: %02X mask: %02X status: %02X ticks: %d SL: %d\n", ctrl_.raw, mask_.raw, status_.raw, ticks_, scanline_ );
+    printf("ctrl: %02X mask: %02X status: %02X scroll: (%d,%d) tick: %d SL: %d\n",
+           ctrl_.raw,
+           mask_.raw,
+           status_.raw,
+           scroll_.bits.x,
+           scroll_.bits.y,
+           tick_,
+           scanline_ );
 
     uint16_t nametable = (ctrl_.bits.nametable << 10) | 0x2000;
     printf("%04X\n", nametable);
@@ -134,6 +142,7 @@ void PPU::print_context()
     }
 #endif
 
+#if 0
     printf("OAM:\n");
     for ( int i = 0; i < 64; ++i ) {
         printf("%d ", i);
@@ -143,6 +152,7 @@ void PPU::print_context()
         uint8_t att = oam_[ i * 4 + 2 ];
         printf("(%03d,%03d):%02x[%02x]\n", x, y, idx, att);
     }
+#endif
 }
 
 void PPU::get_pattern( uint16_t baseAddr, int idx, uint8_t* ptr, int row_length, int paletteNum )
@@ -180,21 +190,23 @@ void PPU::get_sprite( int idx, uint8_t *ptr )
 
 void PPU::frame()
 {
+#if 0
     if ( mask_.bits.show_background ) {
         // browse nametable
         uint16_t nametable = (ctrl_.bits.nametable << 10) | 0x2000;
 
         // TODO : add scroll
+        int xs = scroll_.bits.x / 8;
 
         // read nametable
         // iterate by block of 8x8
         for ( int y = 0; y < 30; y++ ) {
             for ( int x = 0; x < 32; x++ ) {
                 // 32x32 pixel block coordinates
-                int x32 = x/4;
+                int x32 = (x+xs)/4;
                 int y32 = y/4;
                 // 16x16 pixel block coordinates
-                int x16 = x/2;
+                int x16 = (x+xs)/2;
                 int y16 = y/2;
                 uint8_t pal = mem_[ nametable + 0x3C0 + x32 + y32 * 8];
                 if ( x16&1 ) {
@@ -213,10 +225,10 @@ void PPU::frame()
                         pal = (pal & 0x03);
                     }
                 }
-                uint8_t patIdx = mem_[ nametable + y*32+x ];
+                uint8_t patIdx = mem_[ nametable + y*32+(x+xs) ];
                 get_pattern( ctrl_.bits.background_pattern ? 0x1000 : 0,
                              patIdx,
-                             &nametable_[0] + y*8*(8*32) + x*8,
+                             &nametable_[0] + y*8*(8*32) + (x+xs)*8,
                              32*8,
                              pal);
             }
@@ -258,39 +270,155 @@ void PPU::frame()
             }
         }
     }
+#else
 
-    // copy temporary screen to screen
-    memcpy( &screen_[0], &nametable_[0], 32*30*64 );
-
-    {
-        uint8_t *rgb;
-        int pitch;
-        SDL_LockTexture( screen_tex_, NULL, (void**)&rgb, &pitch );
-        for ( size_t i = 0; i < 30*32*8*8; i++ ) {
-            rgb[i*3+0] = NesPalette[screen_[i]][0];
-            rgb[i*3+1] = NesPalette[screen_[i]][1];
-            rgb[i*3+2] = NesPalette[screen_[i]][2];
-        }
-        SDL_UnlockTexture( screen_tex_ );
+    // pre-render scanline
+    if ( scanline_ == 261 ) {
+        // fecth two first tiles of the next scanline (0)
     }
+    else if ( scanline_ >= 0 && scanline_ <= 239 ) {
+        // visible scanline
+        if ( tick_ < 256 ) {
+            uint16_t nt_addr = (ctrl_.bits.nametable << 10) | 0x2000;
+            uint16_t bg_addr = ctrl_.bits.background_pattern ? 0x1000 : 0;
+            // Scroll : CCCCCFFF
+            int coarse_xs = scroll_.bits.x >> 3;
+            int coarse_ys = scroll_.bits.y >> 3;
+            int fine_xs = scroll_.bits.x & 0x7;
+            int fine_ys = scroll_.bits.y & 0x7;
+            int x = tick_; // + fine_xs ?
+            int y = scanline_; // + fine_y ?
+            int tile_x = (x >> 3) + coarse_xs; // starting at tile #2
+            int tile_y = (y >> 3) + coarse_ys;
+            if (tile_x & 32) {
+                tile_x -= 32;
+                nt_addr ^= 0x400;
+            }
+            int x16 = tile_x>>1;
+            int y16 = tile_y>>1;
 
-    SDL_RenderClear(renderer_);
-    SDL_RenderCopy(renderer_, screen_tex_, NULL, NULL);
-    SDL_RenderPresent(renderer_);
+            uint8_t nametable_byte = mem_[ nt_addr + (tile_y<<5)+tile_x ];
+            uint8_t pal = mem_[ nt_addr + 0x3C0 + (tile_x>>2) + ((tile_y>>2) << 3) ];
+            int y_in_tile = y & 0x7;
+            int x_in_tile = x & 0x7;
+            uint8_t tile_l = mem_[ bg_addr + (nametable_byte<<4)+y_in_tile+0 ];
+            uint8_t tile_h = mem_[ bg_addr + (nametable_byte<<4)+y_in_tile+8 ];
+
+            // bg color
+            int d = 7 - x_in_tile;
+            uint8_t c = ((tile_l & (1<<d)) >> d) |
+            (((tile_h & (1<<d)) >> d)<<1);
+            // palette number
+            if ( x16&1 ) {
+                if ( y16&1 ) {
+                    pal = (pal & 0xC0) >> 6;
+                }
+                else {
+                    pal = (pal & 0x0C) >> 2;
+                }
+            }
+            else {
+                if ( y16&1 ) {
+                    pal = (pal & 0x30) >> 4;
+                }
+                else {
+                    pal = (pal & 0x03);
+                }
+            }
+            uint8_t p_color = c ? mem_[0x3F00 + pal * 4 + c ] : mem_[0x3F00];
+            //            p_color = 0;
+
+#if 1
+            if ( mask_.bits.show_sprites ) {
+                // sprites
+                for ( int i = 0; i < n_next_sprites_; i++ ) {
+                    if ( sprite_x_[i] ) {
+                        sprite_x_[i]--;
+                    }
+                    else {
+                        
+                        // TODO deal with 8x16 sprites
+                        //                        if ( ! ctrl_.bits.sprites_are_8x16 ) {
+                        uint8_t idx = oam2_[ i * 4 + 1 ];
+                        uint8_t att = oam2_[ i * 4 + 2 ];
+                        uint8_t pal = (att & 3) + 4;
+                        
+                        uint8_t sp_c = ((next_sprites_[i][0] & 0x80) >> 7) | ( ((next_sprites_[i][1] & 0x80) >> 7) << 1 );
+                        next_sprites_[i][0] <<= 1;
+                        next_sprites_[i][1] <<= 1;
+                        /*if (idx == 0 && sp_c && c )*/ {
+                            status_.bits.sprite0_hit = 1;
+                        }
+                        if (sp_c) {
+                            p_color = sp_c ? mem_[0x3F00 + pal * 4 + sp_c ] : mem_[0x3F00];
+                        }
+                    }
+                }
+            }
+#endif
+            nametable_[ y*256+x ] = p_color;
+        }
+        else if ( tick_ < 321 ) {
+#if 1
+            // fetch sprites for the next scanline
+            uint16_t baseAddr = ctrl_.bits.sprite_pattern ? 0x1000 : 0;
+            int j = 0;
+            for ( int i = 0; j < 8 && i < 64; i++ ) {
+                uint8_t sy   = oam_[ i * 4 + 0 ];
+                uint8_t sx   = oam_[ i * 4 + 3 ];
+                if ( sy > 0xef ) {
+                    continue;
+                }
+                if ( scanline_ >= sy + 8 || scanline_ < sy ) {
+                    continue;
+                }
+                memcpy( &oam2_[j*4], &oam_[i*4], 4 );
+                next_sprites_[j][0] = mem_[ baseAddr + (i<<4) + (scanline_-sy) + 0 ];
+                next_sprites_[j][1] = mem_[ baseAddr + (i<<4) + (scanline_-sy) + 8 ];
+                sprite_x_[j] = sx;
+                j++;
+            }
+            n_next_sprites_ = j;
+#endif
+        }
+        else if ( tick_ < 337 ) {
+        }
+    }
+#endif
+    
+
+    if ( (tick_ == 0) && (scanline_ == 240 ) ) {
+        // copy temporary screen to screen
+        memcpy( &screen_[0], &nametable_[0], 32*30*64 );
+        
+        {
+            uint8_t *rgb;
+            int pitch;
+            SDL_LockTexture( screen_tex_, NULL, (void**)&rgb, &pitch );
+            for ( size_t i = 0; i < 30*32*8*8; i++ ) {
+                rgb[i*3+0] = NesPalette[screen_[i]][0];
+                rgb[i*3+1] = NesPalette[screen_[i]][1];
+                rgb[i*3+2] = NesPalette[screen_[i]][2];
+            }
+            SDL_UnlockTexture( screen_tex_ );
+        }
+            
+        SDL_RenderClear(renderer_);
+        SDL_RenderCopy(renderer_, screen_tex_, NULL, NULL);
+        SDL_RenderPresent(renderer_);
+    }
 }
 
 void PPU::tick()
 {
-    if ( (scanline_ == 0) && (ticks_ == 0) ) {
-        frame();
-    }
+    frame();
 
-    ticks_ = (ticks_ + 1) % 341;
-    if (ticks_ == 0 ) {
+    tick_ = (tick_ + 1) % 341;
+    if (tick_ == 0 ) {
         scanline_ = (scanline_ + 1) % 262;
     }
 
-    if ( (ticks_ == 1) && (scanline_ == 241) ) {
+    if ( (tick_ == 1) && (scanline_ == 241) ) {
         status_.bits.vblank = 1;
         if ( ctrl_.bits.nmi ) {
             cpu_->triggerNMI();
@@ -298,9 +426,11 @@ void PPU::tick()
     }
 
     // pre-render
-    if ( (ticks_ == 1) && (scanline_ == 261) ) {
-        status_.bits.vblank = 0;
-        status_.bits.sprite0_hit = 0;
+    if ( scanline_ == 261 ) {
+        if ( tick_ == 1 ) {
+            status_.bits.vblank = 0;
+            status_.bits.sprite0_hit = 0;
+        }
     }
 }
 
@@ -359,7 +489,7 @@ void PPU::write( uint16_t addr, uint8_t val )
         ppuaddr = ppuaddr + (ctrl_.bits.vram_increment ? 32 : 1 );
     }
     else if ( addr == PPUScroll ) {
-        printf("scroll: %d SL:%d tick:%d\n", val, scanline_, tick_);
+        //        printf("scroll: %d SL:%d tick:%d\n", val, scanline_, tick_);
         scroll_.raw = ( scroll_.raw << 8) | val;
     }
     else if ( addr == OAMAddr ) {

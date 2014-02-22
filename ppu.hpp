@@ -30,7 +30,7 @@ class PPU : public BusDevice
     std::vector<uint8_t>& memory() { return mem_; }
 
     // current tick wihtin the scanline
-    int ticks() const { return ticks_; }
+    int ticks() const { return tick_; }
     // current scanline
     int scanline() const { return scanline_; }
 
@@ -55,7 +55,7 @@ class PPU : public BusDevice
     std::vector<uint8_t> mem_;
     std::vector<uint8_t> screen_;
 
-    int ticks_;
+    int tick_;
     int scanline_;
 
     // status register
@@ -151,8 +151,8 @@ class PPU : public BusDevice
     union Scroll {
         struct
         {
-            uint8_t x;
             uint8_t y;
+            uint8_t x;
         } bits;
         uint16_t raw;
     };
@@ -162,8 +162,15 @@ class PPU : public BusDevice
     CPU* cpu_;
 
     // Object Attribute Memory (sprites)
-    uint8_t oam_[256];
+    uint8_t oam_[64*4];
+    uint8_t oam2_[8*4];
     uint8_t oam_addr_;
+
+    // sprites for the next scanline
+    uint8_t next_sprites_[8][2];
+    // X coordinate for sprites of the next scanline
+    uint8_t sprite_x_[8];
+    int n_next_sprites_;
 
     // temporary screen arrays
     // each cell contains a pixel value
