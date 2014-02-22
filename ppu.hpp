@@ -169,7 +169,7 @@ class PPU : public BusDevice
     // sprites for the next scanline
     uint8_t next_sprites_[8][2];
     // X coordinate for sprites of the next scanline
-    uint8_t sprite_x_[8];
+    int sprite_x_[8];
     int n_next_sprites_;
 
     // temporary screen arrays

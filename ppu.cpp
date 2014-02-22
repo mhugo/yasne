@@ -286,7 +286,7 @@ void PPU::frame()
             int coarse_ys = scroll_.bits.y >> 3;
             int fine_xs = scroll_.bits.x & 0x7;
             int fine_ys = scroll_.bits.y & 0x7;
-            int x = tick_; // + fine_xs ?
+            int x = tick_; // + fine_xs;
             int y = scanline_; // + fine_y ?
             int tile_x = (x >> 3) + coarse_xs; // starting at tile #2
             int tile_y = (y >> 3) + coarse_ys;
@@ -332,26 +332,46 @@ void PPU::frame()
             if ( mask_.bits.show_sprites ) {
                 // sprites
                 for ( int i = 0; i < n_next_sprites_; i++ ) {
-                    if ( sprite_x_[i] ) {
+                    if ( sprite_x_[i] > 0 ) {
                         sprite_x_[i]--;
                     }
-                    else {
+                    else if ( sprite_x_[i] >= -7 ) {
                         
                         // TODO deal with 8x16 sprites
                         //                        if ( ! ctrl_.bits.sprites_are_8x16 ) {
                         uint8_t idx = oam2_[ i * 4 + 1 ];
                         uint8_t att = oam2_[ i * 4 + 2 ];
-                        uint8_t pal = (att & 3) + 4;
+
+                        // Sprite attributes
+                        // 76543210
+                        // ||||||||
+                        // ||||||++- Palette (4 to 7) of sprite
+                        // |||+++--- Unimplemented
+                        // ||+------ Priority (0: in front of background; 1: behind background)
+                        // |+------- Flip sprite horizontally
+                        // +-------- Flip sprite vertically
                         
-                        uint8_t sp_c = ((next_sprites_[i][0] & 0x80) >> 7) | ( ((next_sprites_[i][1] & 0x80) >> 7) << 1 );
-                        next_sprites_[i][0] <<= 1;
-                        next_sprites_[i][1] <<= 1;
+                        uint8_t pal = (att & 3) + 4;
+                        bool h_flip = (att & 0x40);
+                        bool v_flip = (att & 0x80);
+                        uint8_t sp_c;
+                        if ( h_flip ) {
+                            sp_c = (next_sprites_[i][0] & 1) | ( (next_sprites_[i][1] & 1) << 1 );
+                            next_sprites_[i][0] >>= 1;
+                            next_sprites_[i][1] >>= 1;
+                        }
+                        else {
+                            sp_c = ((next_sprites_[i][0] & 0x80) >> 7) | ( ((next_sprites_[i][1] & 0x80) >> 7) << 1 );
+                            next_sprites_[i][0] <<= 1;
+                            next_sprites_[i][1] <<= 1;
+                        }
                         /*if (idx == 0 && sp_c && c )*/ {
                             status_.bits.sprite0_hit = 1;
                         }
                         if (sp_c) {
                             p_color = sp_c ? mem_[0x3F00 + pal * 4 + sp_c ] : mem_[0x3F00];
                         }
+                        sprite_x_[i]--;
                     }
                 }
             }
@@ -363,18 +383,24 @@ void PPU::frame()
             // fetch sprites for the next scanline
             uint16_t baseAddr = ctrl_.bits.sprite_pattern ? 0x1000 : 0;
             int j = 0;
-            for ( int i = 0; j < 8 && i < 64; i++ ) {
+            for ( int i = 0; (j < 8) && (i < 64); i++ ) {
                 uint8_t sy   = oam_[ i * 4 + 0 ];
                 uint8_t sx   = oam_[ i * 4 + 3 ];
+                uint8_t idx  = oam_[ i * 4 + 1 ];
+                uint8_t att  = oam_[ i * 4 + 2 ];
                 if ( sy > 0xef ) {
                     continue;
                 }
                 if ( scanline_ >= sy + 8 || scanline_ < sy ) {
                     continue;
                 }
+                int dy = scanline_-sy;
+                if (att & 0x80) { // vertical flip
+                    dy = 7 - dy;
+                }
                 memcpy( &oam2_[j*4], &oam_[i*4], 4 );
-                next_sprites_[j][0] = mem_[ baseAddr + (i<<4) + (scanline_-sy) + 0 ];
-                next_sprites_[j][1] = mem_[ baseAddr + (i<<4) + (scanline_-sy) + 8 ];
+                next_sprites_[j][0] = mem_[ baseAddr + (idx*16) + dy + 0 ];
+                next_sprites_[j][1] = mem_[ baseAddr + (idx*16) + dy + 8 ];
                 sprite_x_[j] = sx;
                 j++;
             }
