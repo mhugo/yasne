@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <iostream>
+#include <fstream>
 #include "ppu.hpp"
 #include "cpu.hpp"
 
@@ -153,6 +154,24 @@ void PPU::print_context()
         printf("(%03d,%03d):%02x[%02x]\n", x, y, idx, att);
     }
 #endif
+}
+
+void PPU::dump_mem( const std::string& out_file ) const
+{
+    uint16_t pattern = ctrl_.bits.background_pattern ? 0x1000 : 0;
+    uint16_t nametable = (ctrl_.bits.nametable << 10) | 0x2000;
+    std::string chr_file = out_file + ".chr";
+    std::string pal_file = out_file + ".pal";
+    std::string nam_file = out_file + ".nam";
+    std::ofstream of_chr( chr_file.c_str() );
+    of_chr.write( (char*)&mem_[pattern], 0x1000 );
+    of_chr.close();
+    std::ofstream of_nam( nam_file.c_str() );
+    of_nam.write( (char*)&mem_[nametable], 0x400 );
+    of_nam.close();
+    std::ofstream of_pal( pal_file.c_str() );
+    of_pal.write( (char*)&mem_[0x3F00], 16 );
+    of_pal.close();
 }
 
 void PPU::get_pattern( uint16_t baseAddr, int idx, uint8_t* ptr, int row_length, int paletteNum )
@@ -365,7 +384,7 @@ void PPU::frame()
                             next_sprites_[i][0] <<= 1;
                             next_sprites_[i][1] <<= 1;
                         }
-                        /*if (idx == 0 && sp_c && c )*/ {
+                        if (idx == 0 && sp_c && c ) {
                             status_.bits.sprite0_hit = 1;
                         }
                         if (sp_c) {

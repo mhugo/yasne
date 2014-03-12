@@ -45,6 +45,8 @@ class PPU : public BusDevice
 
     void print_context();
 
+    void dump_mem( const std::string& out_file ) const;
+
  private:
     // 8 registers
     uint8_t regs[8];

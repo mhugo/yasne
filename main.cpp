@@ -247,7 +247,15 @@ int main( int argc, char *argv[] )
                     break;
                 }
                 case 'v':
-                    ppu.print_context();
+                    if ( command.name() == "vdump" ) {
+                        if ( command.n_args() == 1 ) {
+                            std::string out_file( command.arg(0) );
+                            ppu.dump_mem( out_file );
+                        }
+                    }
+                    else {
+                        ppu.print_context();
+                    }
                     doContinue = true;
                     break;
                 case 'p': {
