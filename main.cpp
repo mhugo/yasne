@@ -126,7 +126,7 @@ int main( int argc, char *argv[] )
 
     cpu.reset();
 
-    bool stepMode = false;
+    bool stepMode = true;
 
     // compare to log file
     std::ifstream logFile;
@@ -153,6 +153,9 @@ int main( int argc, char *argv[] )
                 }
                 else if ( ke->keysym.sym == SDLK_RETURN ) {
                     controller.setState( 0, Controller::StartButton, pressed );
+                }
+                else if ( ke->keysym.sym == SDLK_SPACE ) {
+                    controller.setState( 0, Controller::SelectButton, pressed );
                 }
                 else if ( ke->keysym.sym == SDLK_RIGHT ) {
                     controller.setState( 0, Controller::RightButton, pressed );
