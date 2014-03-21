@@ -160,7 +160,13 @@ class PPU : public BusDevice
     };
     Scroll scroll_;
 
+    // vram address, refered as 'v' in loopy's doc
     mutable uint16_t ppuaddr;
+    // vram temporary address, refered as 't' in loopy's doc
+    mutable uint16_t ppuaddr_t;
+    // toggle high/low address (shared by ppuaddr and ppuscroll)
+    mutable int write_low_addr_;
+
     CPU* cpu_;
 
     // Object Attribute Memory (sprites)

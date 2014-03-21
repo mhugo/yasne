@@ -78,6 +78,7 @@ PPU::PPU( CPU* cpu ) : mem_( 0x4000 ),
                        ppuaddr( 0 ),
                        cpu_( cpu ),
                        oam_addr_( 0 ),
+                       write_low_addr_( 0 ),
                        n_next_sprites_( 0 ),
                        nametable_( 240*256 ),
                        screen_tex_( 0 )
@@ -488,6 +489,8 @@ uint8_t PPU::read( uint16_t addr ) const
     if ( addr == PPUStatus ) {
         uint8_t c = status_.raw;
         status_.bits.vblank = 0;
+        // reset toggle
+        write_low_addr_ = 0;
         return c;
     }
     else if ( addr == PPUData ) {
@@ -522,20 +525,32 @@ void PPU::write( uint16_t addr, uint8_t val )
         mask_.raw = val;
     }
     else if ( addr == PPUAddr ) {
-        ppuaddr = (ppuaddr << 8) | val;
+        if ( write_low_addr_ ) {
+            ppuaddr |= val;
+        }
+        else {
+            ppuaddr = (val << 8) & 0x3FFF;
+        }
+        write_low_addr_ = 1 - write_low_addr_;
     }
     else if ( addr == PPUData ) {
         if ( ppuaddr == 0x3F10 || ppuaddr == 0x3F14 || ppuaddr == 0x3F18 || ppuaddr == 0x3F1C ) {
             mem_[ ppuaddr - 0x10 ] = val;
         }
         else {
-            mem_[ ppuaddr % mem_.size() ] = val;
+            mem_[ ppuaddr & 0x3FFF ] = val;
         }
         ppuaddr = ppuaddr + (ctrl_.bits.vram_increment ? 32 : 1 );
     }
     else if ( addr == PPUScroll ) {
         //        printf("scroll: %d SL:%d tick:%d\n", val, scanline_, tick_);
-        scroll_.raw = ( scroll_.raw << 8) | val;
+        if ( write_low_addr_ ) {
+            scroll_.raw |= val;
+        }
+        else {
+            scroll_.raw = (val << 8);
+        }
+        write_low_addr_ = 1 - write_low_addr_;
     }
     else if ( addr == OAMAddr ) {
         oam_addr_ = val;
