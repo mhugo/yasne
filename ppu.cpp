@@ -4,6 +4,26 @@
 #include "ppu.hpp"
 #include "cpu.hpp"
 
+std::ostream& operator<<( std::ostream& ostr, const PPU::Address& adr )
+{
+    adr.print(ostr);
+    return ostr;
+}
+std::ostream& operator<<( std::ostream& ostr, const PPU::Mask& adr )
+{
+    adr.print(ostr);
+    return ostr;
+}
+std::ostream& operator<<( std::ostream& ostr, const PPU::Status& adr )
+{
+    adr.print(ostr);
+    return ostr;
+}
+std::ostream& operator<<( std::ostream& ostr, const PPU::Controller& adr )
+{
+    adr.print(ostr);
+    return ostr;
+}
 const char NesPalette[][3] = {
     0x7C,0x7C,0x7C,
     0x00,0x00,0xFC,
@@ -76,6 +96,7 @@ PPU::PPU( CPU* cpu ) : mem_( 0x4000 ),
                        tick_(0),
                        scanline_(0),
                        ppuaddr( 0 ),
+                       ppuaddr_t( 0 ),
                        cpu_( cpu ),
                        oam_addr_( 0 ),
                        write_low_addr_( 0 ),
@@ -121,17 +142,11 @@ void PPU::print_context()
         }
     }
 #endif
-    printf("ctrl: %02X mask: %02X status: %02X scroll: (%d,%d) tick: %d SL: %d\n",
-           ctrl_.raw,
-           mask_.raw,
-           status_.raw,
-           scroll_.bits.x,
-           scroll_.bits.y,
-           tick_,
-           scanline_ );
-
-    uint16_t nametable = (ctrl_.bits.nametable << 10) | 0x2000;
-    printf("%04X\n", nametable);
+    std::cout << "ctrl: " << ctrl_ << std::endl;
+    std::cout << "mask:" << mask_ << std::endl;
+    std::cout << "status:" << status_ << std::endl;
+    std::cout << "ppuaddr:" << ppuaddr << " ppuaddr_t:" << ppuaddr_t << std::endl;
+    std::cout << "tick:" << tick_ << " SL:" << scanline_ << std::endl;
 
 #if 0
     // read nametable
@@ -210,124 +225,43 @@ void PPU::get_sprite( int idx, uint8_t *ptr )
 
 void PPU::frame()
 {
-#if 0
-    if ( mask_.bits.show_background ) {
-        // browse nametable
-        uint16_t nametable = (ctrl_.bits.nametable << 10) | 0x2000;
-
-        // TODO : add scroll
-        int xs = scroll_.bits.x / 8;
-
-        // read nametable
-        // iterate by block of 8x8
-        for ( int y = 0; y < 30; y++ ) {
-            for ( int x = 0; x < 32; x++ ) {
-                // 32x32 pixel block coordinates
-                int x32 = (x+xs)/4;
-                int y32 = y/4;
-                // 16x16 pixel block coordinates
-                int x16 = (x+xs)/2;
-                int y16 = y/2;
-                uint8_t pal = mem_[ nametable + 0x3C0 + x32 + y32 * 8];
-                if ( x16&1 ) {
-                    if ( y16&1 ) {
-                        pal = (pal & 0xC0) >> 6;
-                    }
-                    else {
-                        pal = (pal & 0x0C) >> 2;
-                    }
-                }
-                else {
-                    if ( y16&1 ) {
-                        pal = (pal & 0x30) >> 4;
-                    }
-                    else {
-                        pal = (pal & 0x03);
-                    }
-                }
-                uint8_t patIdx = mem_[ nametable + y*32+(x+xs) ];
-                get_pattern( ctrl_.bits.background_pattern ? 0x1000 : 0,
-                             patIdx,
-                             &nametable_[0] + y*8*(8*32) + (x+xs)*8,
-                             32*8,
-                             pal);
-            }
-        }
-    }
-
-    if ( mask_.bits.show_sprites ) {
-        // TODO deal with 8x16 sprites
-        if ( ! ctrl_.bits.sprites_are_8x16 ) {
-            uint16_t baseAddr = ctrl_.bits.sprite_pattern ? 0x1000 : 0;
-            uint8_t current_sprite[8*8];
-            for ( int i = 0; i < 64; ++i ) {
-                uint8_t y   = oam_[ i * 4 + 0 ];
-                uint8_t x   = oam_[ i * 4 + 3 ];
-                uint8_t idx = oam_[ i * 4 + 1 ];
-                uint8_t att = oam_[ i * 4 + 2 ];
-                if ( y > 0xef ) {
-                    continue;
-                }
-                get_sprite( idx, current_sprite );
-                int palNum = (att & 0x3) + 4;
-                uint8_t *palette = &mem_[0x3F00 + palNum * 4];
-
-                // merge sprite and nametable
-                // TODO : sprite priority
-                for ( int yy = 0; yy < 8; yy++ ) {
-                    for ( int xx = 0; xx < 8; xx++ ) {
-                        uint8_t* screen_pixel = &nametable_[0] + (y+yy)*(8*32) + (x+xx);
-                        uint8_t sprite_val = current_sprite[xx+yy*8];
-
-                        if ( sprite_val ) {
-                            if ( i == 0 && *screen_pixel ) {
-                                status_.bits.sprite0_hit = 1;
-                            }
-                            *screen_pixel = palette[sprite_val];
-                        }
-                    }
-                }
-            }
-        }
-    }
-#else
-
     // pre-render scanline
     if ( scanline_ == 261 ) {
         // fecth two first tiles of the next scanline (0)
     }
     else if ( scanline_ >= 0 && scanline_ <= 239 ) {
+        if ( ! mask_.bits.show_background ) {
+            return;
+        }
         // visible scanline
         if ( tick_ < 256 ) {
-            uint16_t nt_addr = (ctrl_.bits.nametable << 10) | 0x2000;
-            uint16_t bg_addr = ctrl_.bits.background_pattern ? 0x1000 : 0;
-            // Scroll : CCCCCFFF
-            int coarse_xs = scroll_.bits.x >> 3;
-            int coarse_ys = scroll_.bits.y >> 3;
-            int fine_xs = scroll_.bits.x & 0x7;
-            int fine_ys = scroll_.bits.y & 0x7;
-            int x = tick_; // + fine_xs;
-            int y = scanline_; // + fine_y ?
-            int tile_x = (x >> 3) + coarse_xs; // starting at tile #2
-            int tile_y = (y >> 3) + coarse_ys;
-            if (tile_x & 32) {
-                tile_x -= 32;
-                nt_addr ^= 0x400;
-            }
-            int x16 = tile_x>>1;
-            int y16 = tile_y>>1;
+            int x = tick_;
+            int y = scanline_;
+            int x16 = ppuaddr.bits.coarse_x / 2;
+            int y16 = ppuaddr.bits.coarse_y / 2;
 
-            uint8_t nametable_byte = mem_[ nt_addr + (tile_y<<5)+tile_x ];
-            uint8_t pal = mem_[ nt_addr + 0x3C0 + (tile_x>>2) + ((tile_y>>2) << 3) ];
-            int y_in_tile = y & 0x7;
-            int x_in_tile = x & 0x7;
-            uint8_t tile_l = mem_[ bg_addr + (nametable_byte<<4)+y_in_tile+0 ];
-            uint8_t tile_h = mem_[ bg_addr + (nametable_byte<<4)+y_in_tile+8 ];
+            //            std::cout << "x:" << x << " cx:" << (ppuaddr.bits.coarse_x) << " fx:" << ppuaddr.bits.fine_x << " px:" << (ppuaddr.bits.coarse_x * 8 + ppuaddr.bits.fine_x)<< std::endl;
+
+            uint16_t tile_addr = 0x2000 | (ppuaddr.raw & 0x03FF);
+
+            //uint16_t tile_addr = 0x2000 | ((y/8)<<5) | (x/8);
+            //            std::cout << std::hex << tile_addr << std::dec << std::endl;
+            uint16_t attr_addr = 0x23C0 |
+                (ppuaddr.bits.nametable << 10) |
+                ((ppuaddr.bits.coarse_y / 4) << 3) |
+                (ppuaddr.bits.coarse_x / 4);
+
+            uint8_t nametable_byte = mem_[ tile_addr ];
+            uint8_t pal = mem_[ attr_addr ];
+
+            uint16_t bg_addr = ctrl_.bits.background_pattern ? 0x1000 : 0;
+            uint8_t tile_l = mem_[ bg_addr + (nametable_byte<<4)+ppuaddr.bits.fine_y+0 ];
+            uint8_t tile_h = mem_[ bg_addr + (nametable_byte<<4)+ppuaddr.bits.fine_y+8 ];
 
             // bg color
-            int d = 7 - x_in_tile;
+            int d = 7 - ppuaddr.bits.fine_x;
             uint8_t c = ((tile_l & (1<<d)) >> d) |
-            (((tile_h & (1<<d)) >> d)<<1);
+                (((tile_h & (1<<d)) >> d)<<1);
             // palette number
             if ( x16&1 ) {
                 if ( y16&1 ) {
@@ -348,7 +282,7 @@ void PPU::frame()
             uint8_t p_color = c ? mem_[0x3F00 + pal * 4 + c ] : mem_[0x3F00];
             //            p_color = 0;
 
-#if 1
+#if 0
             if ( mask_.bits.show_sprites ) {
                 // sprites
                 for ( int i = 0; i < n_next_sprites_; i++ ) {
@@ -396,10 +330,59 @@ void PPU::frame()
                 }
             }
 #endif
-            nametable_[ y*256+x ] = p_color;
+            screen_[ y*256+x ] = p_color;
+
+            // increment x
+            if ( ppuaddr.bits.fine_x < 7 ) {
+                ppuaddr.bits.fine_x ++;
+            }
+            else {
+                ppuaddr.bits.fine_x = 0;
+                if ( ppuaddr.bits.coarse_x < 31 ) {
+                    ppuaddr.bits.coarse_x ++;
+                }
+                else {
+                    ppuaddr.bits.coarse_x = 0;
+                    // switch nametable 2000 <-> 2400, 2800 <-> 2C00
+                    ppuaddr.bits.nametable ^= 1;
+                }
+            }
+
+            //            render();
         }
         else if ( tick_ < 321 ) {
-#if 1
+            if ( tick_ == 256 ) {
+                //                std::cout << "y:" << scanline_ << " cy:" << (ppuaddr.bits.coarse_y) << " fy:" << ppuaddr.bits.fine_y << " py:" << (ppuaddr.bits.coarse_y * 8 + ppuaddr.bits.fine_y)<< std::endl;
+
+            render();
+                // increment Y
+                if ( ppuaddr.bits.fine_y < 7 ) {
+                    ppuaddr.bits.fine_y ++;
+                }
+                else {
+                    ppuaddr.bits.fine_y = 0;
+                    if ( ppuaddr.bits.coarse_y == 29 ) {
+                        ppuaddr.bits.coarse_y = 0;
+                        //                        ppuaddr.bits.nametable ^= 2;
+                    }
+                    else if ( ppuaddr.bits.coarse_y == 31 ) {
+                        ppuaddr.bits.coarse_y = 0;
+                    }
+                    else {
+                        ppuaddr.bits.coarse_y ++;
+                    }
+                }
+            }
+            else if ( tick_ == 257 ) {
+                // copy t to v (horizontal part)
+                //v: ....F.. ...EDCBA = t: ....F.. ...EDCBA
+                ppuaddr.raw |= ppuaddr_t.raw & 0x041F;
+            }
+            else if ( tick_ >= 280 && tick_ <= 304 ) {
+                //v: IHGF.ED CBA..... = t: IHGF.ED CBA.....
+                ppuaddr.raw |= ppuaddr_t.raw & 0x7BE0;
+            }
+#if 0
             // fetch sprites for the next scanline
             uint16_t baseAddr = ctrl_.bits.sprite_pattern ? 0x1000 : 0;
             int j = 0;
@@ -430,29 +413,32 @@ void PPU::frame()
         else if ( tick_ < 337 ) {
         }
     }
-#endif
     
-
+#if 1
     if ( (tick_ == 0) && (scanline_ == 240 ) ) {
-        // copy temporary screen to screen
-        memcpy( &screen_[0], &nametable_[0], 32*30*64 );
-        
-        {
-            uint8_t *rgb;
-            int pitch;
-            SDL_LockTexture( screen_tex_, NULL, (void**)&rgb, &pitch );
-            for ( size_t i = 0; i < 30*32*8*8; i++ ) {
-                rgb[i*3+0] = NesPalette[screen_[i]][0];
-                rgb[i*3+1] = NesPalette[screen_[i]][1];
-                rgb[i*3+2] = NesPalette[screen_[i]][2];
-            }
-            SDL_UnlockTexture( screen_tex_ );
-        }
-            
-        SDL_RenderClear(renderer_);
-        SDL_RenderCopy(renderer_, screen_tex_, NULL, NULL);
-        SDL_RenderPresent(renderer_);
+        render();
     }
+#endif
+}
+
+void PPU::render()
+{
+    // copy temporary screen to screen
+    //    memcpy( &screen_[0], &nametable_[0], 32*30*64 );
+        
+    uint8_t *rgb;
+    int pitch;
+    SDL_LockTexture( screen_tex_, NULL, (void**)&rgb, &pitch );
+    for ( size_t i = 0; i < 30*32*8*8; i++ ) {
+        rgb[i*3+0] = NesPalette[screen_[i]][0];
+        rgb[i*3+1] = NesPalette[screen_[i]][1];
+        rgb[i*3+2] = NesPalette[screen_[i]][2];
+    }
+    SDL_UnlockTexture( screen_tex_ );
+
+    SDL_RenderClear(renderer_);
+    SDL_RenderCopy(renderer_, screen_tex_, NULL, NULL);
+    SDL_RenderPresent(renderer_);
 }
 
 void PPU::tick()
@@ -494,11 +480,12 @@ uint8_t PPU::read( uint16_t addr ) const
         return c;
     }
     else if ( addr == PPUData ) {
-        uint8_t b = mem_[ ppuaddr % mem_.size() ];
-        if ( ppuaddr == 0x3F10 || ppuaddr == 0x3F14 || ppuaddr == 0x3F18 || ppuaddr == 0x3F1C ) {
-            b = mem_[ ppuaddr - 0x10 ];
+        uint16_t addr = ppuaddr.raw & 0x3FFF;
+        uint8_t b = mem_[ addr ];
+        if ( addr == 0x3F10 || addr == 0x3F14 || addr == 0x3F18 || addr == 0x3F1C ) {
+            b = mem_[ addr - 0x10 ];
         }
-        ppuaddr = ppuaddr + (ctrl_.bits.vram_increment ? 32 : 1 );
+        ppuaddr.raw = ppuaddr.raw + (ctrl_.bits.vram_increment ? 32 : 1 );
         return b;
     }
     else if ( addr == OAMAddr ) {
@@ -520,37 +507,52 @@ void PPU::write( uint16_t addr, uint8_t val )
     }
     if ( addr == PPUCtrl ) {
         ctrl_.raw = val;
+        // select nametable address
+        ppuaddr_t.bits.nametable = ctrl_.bits.nametable;
     }
     else if ( addr == PPUMask ) {
         mask_.raw = val;
     }
     else if ( addr == PPUAddr ) {
-        if ( write_low_addr_ ) {
-            ppuaddr |= val;
+        //        std::cout << "set ppuaddr " << std::hex << int(val) << std::dec << std::endl;
+        if ( write_low_addr_ == 1 ) {
+            //t: ....... HGFEDCBA = d: HGFEDCBA
+            //v                   = t
+            ppuaddr_t.raw = (ppuaddr_t.raw & 0xFFFF00) | val;
+            ppuaddr = ppuaddr_t;
         }
         else {
-            ppuaddr = (val << 8) & 0x3FFF;
+            //t: .FEDCBA ........ = d: ..FEDCBA
+            //t: X...... ........ = 0
+            ppuaddr_t.raw = ((val & 0x3F) << 8) | (ppuaddr_t.raw & 0xFFC0FF);
+            ppuaddr_t.bits.fine_y &= 3;
         }
-        write_low_addr_ = 1 - write_low_addr_;
+        write_low_addr_ ^= 1;
     }
     else if ( addr == PPUData ) {
-        if ( ppuaddr == 0x3F10 || ppuaddr == 0x3F14 || ppuaddr == 0x3F18 || ppuaddr == 0x3F1C ) {
-            mem_[ ppuaddr - 0x10 ] = val;
+        addr = ppuaddr.raw & 0x3FFF;
+        if ( addr == 0x3F10 || addr == 0x3F14 || addr == 0x3F18 || addr == 0x3F1C ) {
+            mem_[ addr - 0x10 ] = val;
         }
         else {
-            mem_[ ppuaddr & 0x3FFF ] = val;
+            mem_[ addr ] = val;
         }
-        ppuaddr = ppuaddr + (ctrl_.bits.vram_increment ? 32 : 1 );
+        ppuaddr.raw = ppuaddr.raw + (ctrl_.bits.vram_increment ? 32 : 1 );
     }
     else if ( addr == PPUScroll ) {
-        //        printf("scroll: %d SL:%d tick:%d\n", val, scanline_, tick_);
-        if ( write_low_addr_ ) {
-            scroll_.raw |= val;
+        //        std::cout << "set ppuscroll " << std::hex << int(val) << std::dec << std::endl;
+        if ( write_low_addr_ == 1 ) {
+            //t: CBA..HG FED..... = d: HGFEDCBA
+            ppuaddr_t.bits.coarse_y = val >> 3;
+            ppuaddr_t.bits.fine_y = val & 7;
         }
         else {
-            scroll_.raw = (val << 8);
+            //t: ....... ...HGFED = d: HGFED...
+            //x:              CBA = d: .....CBA
+            ppuaddr_t.bits.coarse_x = val >> 3;
+            ppuaddr_t.bits.fine_x = val & 7;
         }
-        write_low_addr_ = 1 - write_low_addr_;
+        write_low_addr_ ^= 1;
     }
     else if ( addr == OAMAddr ) {
         oam_addr_ = val;

@@ -517,6 +517,7 @@ std::ostream& operator<<( std::ostream& ostr, const Instruction& instr )
         ostr << "\t($" << std::setw(2) << std::setfill('0') << (instr.operand1+0) << "),Y";
         break;
     }
+    ostr << std::dec;
     return ostr;
 }
 

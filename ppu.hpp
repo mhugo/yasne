@@ -47,6 +47,8 @@ class PPU : public BusDevice
 
     void dump_mem( const std::string& out_file ) const;
 
+    void render();
+
  private:
     // 8 registers
     uint8_t regs[8];
@@ -60,6 +62,7 @@ class PPU : public BusDevice
     int tick_;
     int scanline_;
 
+public:
     // status register
     // 7654 3210
     // |||| ||||
@@ -89,7 +92,15 @@ class PPU : public BusDevice
         } bits;
         uint8_t raw;
         Status() : raw(0) {}
+        void print( std::ostream& ostr ) const {
+            ostr << "(last:" << int(bits.last)
+                 << " sp_overflow:" << int(bits.sprite_overflow)
+                 << " sp0_hit:" << int(bits.sprite0_hit)
+                 << " vblank:" << int(bits.vblank)
+                 << ")";
+        }
     };
+private:
     mutable Status status_;
 
     // controller register
@@ -107,6 +118,7 @@ class PPU : public BusDevice
     //    |          (0: read backdrop from EXT pins; 1: output color on EXT pins)
     //    +--------- Generate an NMI at the start of the
     //    vertical blanking interval (0: off; 1: on)
+public:
     union Controller {
         struct
         {
@@ -120,7 +132,18 @@ class PPU : public BusDevice
         } bits;
         uint8_t raw;
         Controller() : raw(0) {}
+        void print( std::ostream& ostr ) const {
+            ostr << "(nametable:" << int(bits.nametable)
+                 << " vram_inc:" << int(bits.vram_increment)
+                 << " sp_pattern:" << int(bits.sprite_pattern)
+                 << " bg_pattern:" << int(bits.background_pattern)
+                 << " sp_8x16:" << int(bits.sprites_are_8x16)
+                 << " ext:" << int(bits.ext)
+                 << " nmi:" << int(bits.nmi)
+                 << ")";
+        }
     };
+private:
     Controller ctrl_;
 
     // 76543210
@@ -133,6 +156,7 @@ class PPU : public BusDevice
     // ||+------ Intensify reds (and darken other colors)
     // |+------- Intensify greens (and darken other colors)
     // +-------- Intensify blues (and darken other colors)
+public:
     union Mask {
         struct
         {
@@ -141,29 +165,62 @@ class PPU : public BusDevice
             uint8_t show_leftmost_sprites    : 1;
             uint8_t show_background          : 1;
             uint8_t show_sprites             : 1;
-            uint8_t intensity_reds           : 1;
+            uint8_t intensify_reds           : 1;
             uint8_t intensify_greens         : 1;
             uint8_t intensify_blues          : 1;
         } bits;
         uint8_t raw;
         Mask() : raw(0) {}
+        void print( std::ostream& ostr ) const {
+            ostr << "(grayscale: " << int(bits.grayscale)
+                 << " show_leftmost_bg: " << int(bits.show_leftmost_background)
+                 << " show_leftmost_sp: " << int(bits.show_leftmost_sprites)
+                 << " show_bg: " << int(bits.show_background)
+                 << " show_sp: " << int(bits.show_sprites)
+                 << " int_r: " << int(bits.intensify_reds)
+                 << " int_g: " << int(bits.intensify_greens)
+                 << " int_b: " << int(bits.intensify_blues)
+                 << ")";
+        }
     };
+private:
     Mask mask_;
 
-    union Scroll {
-        struct
-        {
-            uint8_t y;
-            uint8_t x;
+    // xx x yyy NN YY YYY XXXXX
+    // || | ||| || || ||| +++++-- coarse X scroll
+    // || | ||| || ++ +++-------- coarse Y scroll
+    // || | ||| ++--- ----------- nametable select
+    // || | +++------ ----------- fine Y scroll
+    // ++-+---------- ----------- fine X scroll
+public:
+    union Address
+    {
+        struct {
+            // scroll
+            uint32_t coarse_x  : 5;
+            uint32_t coarse_y  : 5;
+            uint32_t nametable : 2;
+            uint32_t fine_y    : 3;
+            uint32_t fine_x    : 3;
         } bits;
-        uint16_t raw;
-    };
-    Scroll scroll_;
+        uint32_t raw;
+        Address( uint32_t v = 0 ) : raw(v) {}
 
-    // vram address, refered as 'v' in loopy's doc
-    mutable uint16_t ppuaddr;
-    // vram temporary address, refered as 't' in loopy's doc
-    mutable uint16_t ppuaddr_t;
+        void print( std::ostream& ostr ) const {
+            ostr << "(N:" << bits.nametable
+                 << " X:" << bits.coarse_x
+                 << " Y:" << bits.coarse_y
+                 << " y:" << bits.fine_y
+                 << " x:" << bits.fine_x
+                 << ")";
+        }
+    };
+
+private:
+    // vram address
+    mutable Address ppuaddr;
+    // temporary vram address
+    mutable Address ppuaddr_t;
     // toggle high/low address (shared by ppuaddr and ppuscroll)
     mutable int write_low_addr_;
 
@@ -187,3 +244,8 @@ class PPU : public BusDevice
     // SDL texture used for screen framebuffer
     SDL_Texture *screen_tex_;
 };
+
+std::ostream& operator<<( std::ostream& ostr, const PPU::Status& adr );
+std::ostream& operator<<( std::ostream& ostr, const PPU::Controller& adr );
+std::ostream& operator<<( std::ostream& ostr, const PPU::Mask& adr );
+std::ostream& operator<<( std::ostream& ostr, const PPU::Address& adr );

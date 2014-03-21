@@ -138,6 +138,7 @@ int main( int argc, char *argv[] )
     bool pause = false;
     uint16_t breakAddr = 0;
     bool breakMode = false;
+    bool breakOnFrame = false;
     while ( true ) {
 
         SDL_Event e;
@@ -214,10 +215,12 @@ int main( int argc, char *argv[] )
             pause = true;
         }
         if ( breakMode && breakAddr == cpu.pc ) {
+            printf("Breakpoint\n");
             pause = true;
         }
-        if ( ppu.ticks() == 0 && ppu.scanline() == 0 ) {
-            //pause = true;
+        if ( breakOnFrame && ppu.ticks() == 0 && ppu.scanline() == 0 ) {
+            printf("Break on PPU frame\n");
+            pause = true;
         }
         if ( pause ) {
             print_context( cpu, cpu.pc, 4 );
@@ -232,7 +235,7 @@ int main( int argc, char *argv[] )
                 Command command( line );
                 switch ( command.name()[0] )
                 {
-                case 's':
+                case 's': // step
                     stepMode = true;
                     pause = false;
                     break;
@@ -240,16 +243,26 @@ int main( int argc, char *argv[] )
                     stepMode = false;
                     pause = false;
                     break;
-                case 'b': {
-                    stepMode = false;
-                    pause = false;
-                    breakMode = true;
-                    unsigned int b;
-                    sscanf( command.arg(0).c_str(), "%04X", &b );
-                    breakAddr = b;
+                case 'b': { // breakpoint
+                    if ( command.name() == "bf" ) { // break on next video frame
+                        breakOnFrame = true;
+                    }
+                    else if ( command.name() == "bdf" ) { // disable break on frame
+                        breakOnFrame = false;
+                    }
+                    else if ( command.name() == "bd" ) { // disable breakpoint
+                        breakMode = false;
+                    }
+                    else {
+                        breakMode = true;
+                        unsigned int b;
+                        sscanf( command.arg(0).c_str(), "%04X", &b );
+                        breakAddr = b;
+                    }
+                    doContinue = true;
                     break;
                 }
-                case 'v':
+                case 'v': // related to video
                     if ( command.name() == "vdump" ) {
                         if ( command.n_args() == 1 ) {
                             std::string out_file( command.arg(0) );
