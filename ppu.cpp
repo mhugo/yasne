@@ -228,40 +228,47 @@ void PPU::frame()
     // pre-render scanline
     if ( scanline_ == 261 ) {
         // fecth two first tiles of the next scanline (0)
+        if ( tick_ >= 280 && tick_ <= 304 ) {
+            //v: IHGF.ED CBA..... = t: IHGF.ED CBA.....
+            ppuaddr.raw = (ppuaddr.raw & 0xFF41F) | (ppuaddr_t.raw & 0x7BE0);
+        }
     }
     else if ( scanline_ >= 0 && scanline_ <= 239 ) {
         if ( ! mask_.bits.show_background ) {
             return;
         }
         // visible scanline
-        if ( tick_ < 256 ) {
+        if ( (tick_ >= 1) && (tick_ < 256) ) {
             int x = tick_;
             int y = scanline_;
-            int x16 = ppuaddr.bits.coarse_x / 2;
-            int y16 = ppuaddr.bits.coarse_y / 2;
+            if ( (tick_-1) % 8 == 0 ) {
+                int x16 = ppuaddr.bits.coarse_x / 2;
+                int y16 = ppuaddr.bits.coarse_y / 2;
 
-            //            std::cout << "x:" << x << " cx:" << (ppuaddr.bits.coarse_x) << " fx:" << ppuaddr.bits.fine_x << " px:" << (ppuaddr.bits.coarse_x * 8 + ppuaddr.bits.fine_x)<< std::endl;
+                uint16_t tile_addr = 0x2000 | (ppuaddr.raw & 0x0FFF);
+                uint16_t attr_addr = 0x23C0 |
+                    (ppuaddr.bits.nametable << 10) |
+                    ((ppuaddr.bits.coarse_y / 4) << 3) |
+                    (ppuaddr.bits.coarse_x / 4);
 
-            uint16_t tile_addr = 0x2000 | (ppuaddr.raw & 0x03FF);
+                uint8_t nametable_byte = mem_[ tile_addr ];
+                //                pal_shift = mem_[ attr_addr ];
 
-            //uint16_t tile_addr = 0x2000 | ((y/8)<<5) | (x/8);
-            //            std::cout << std::hex << tile_addr << std::dec << std::endl;
-            uint16_t attr_addr = 0x23C0 |
-                (ppuaddr.bits.nametable << 10) |
-                ((ppuaddr.bits.coarse_y / 4) << 3) |
-                (ppuaddr.bits.coarse_x / 4);
-
-            uint8_t nametable_byte = mem_[ tile_addr ];
-            uint8_t pal = mem_[ attr_addr ];
-
-            uint16_t bg_addr = ctrl_.bits.background_pattern ? 0x1000 : 0;
-            uint8_t tile_l = mem_[ bg_addr + (nametable_byte<<4)+ppuaddr.bits.fine_y+0 ];
-            uint8_t tile_h = mem_[ bg_addr + (nametable_byte<<4)+ppuaddr.bits.fine_y+8 ];
+                uint16_t bg_addr = ctrl_.bits.background_pattern ? 0x1000 : 0;
+                bg_shift_l = (bg_shift_l & 0xFF00) | (mem_[ bg_addr + (nametable_byte<<4)+ppuaddr.bits.fine_y+0 ]);
+                bg_shift_h = (bg_shift_h & 0xFF00) | (mem_[ bg_addr + (nametable_byte<<4)+ppuaddr.bits.fine_y+8 ]);
+            }
 
             // bg color
-            int d = 7 - ppuaddr.bits.fine_x;
-            uint8_t c = ((tile_l & (1<<d)) >> d) |
-                (((tile_h & (1<<d)) >> d)<<1);
+            int d = 15-fine_x_;
+            uint8_t c = ((bg_shift_l & (1<<d)) >> d) |
+                (((bg_shift_h & (1<<d)) >> d)<<1);
+            // shift
+            bg_shift_l <<= 1;
+            bg_shift_h <<= 1;
+
+            uint8_t pal = 0;
+            #if 0
             // palette number
             if ( x16&1 ) {
                 if ( y16&1 ) {
@@ -279,10 +286,11 @@ void PPU::frame()
                     pal = (pal & 0x03);
                 }
             }
+            #endif
             uint8_t p_color = c ? mem_[0x3F00 + pal * 4 + c ] : mem_[0x3F00];
             //            p_color = 0;
 
-#if 0
+#if 1
             if ( mask_.bits.show_sprites ) {
                 // sprites
                 for ( int i = 0; i < n_next_sprites_; i++ ) {
@@ -319,7 +327,7 @@ void PPU::frame()
                             next_sprites_[i][0] <<= 1;
                             next_sprites_[i][1] <<= 1;
                         }
-                        if (idx == 0 && sp_c && c ) {
+                        /*if (idx == 0 && sp_c && c )*/ {
                             status_.bits.sprite0_hit = 1;
                         }
                         if (sp_c) {
@@ -333,11 +341,7 @@ void PPU::frame()
             screen_[ y*256+x ] = p_color;
 
             // increment x
-            if ( ppuaddr.bits.fine_x < 7 ) {
-                ppuaddr.bits.fine_x ++;
-            }
-            else {
-                ppuaddr.bits.fine_x = 0;
+            if ( tick_ % 8 == 0 ) {
                 if ( ppuaddr.bits.coarse_x < 31 ) {
                     ppuaddr.bits.coarse_x ++;
                 }
@@ -348,13 +352,9 @@ void PPU::frame()
                 }
             }
 
-            //            render();
         }
         else if ( tick_ < 321 ) {
             if ( tick_ == 256 ) {
-                //                std::cout << "y:" << scanline_ << " cy:" << (ppuaddr.bits.coarse_y) << " fy:" << ppuaddr.bits.fine_y << " py:" << (ppuaddr.bits.coarse_y * 8 + ppuaddr.bits.fine_y)<< std::endl;
-
-            render();
                 // increment Y
                 if ( ppuaddr.bits.fine_y < 7 ) {
                     ppuaddr.bits.fine_y ++;
@@ -363,7 +363,7 @@ void PPU::frame()
                     ppuaddr.bits.fine_y = 0;
                     if ( ppuaddr.bits.coarse_y == 29 ) {
                         ppuaddr.bits.coarse_y = 0;
-                        //                        ppuaddr.bits.nametable ^= 2;
+                        ppuaddr.bits.nametable ^= 2;
                     }
                     else if ( ppuaddr.bits.coarse_y == 31 ) {
                         ppuaddr.bits.coarse_y = 0;
@@ -376,13 +376,9 @@ void PPU::frame()
             else if ( tick_ == 257 ) {
                 // copy t to v (horizontal part)
                 //v: ....F.. ...EDCBA = t: ....F.. ...EDCBA
-                ppuaddr.raw |= ppuaddr_t.raw & 0x041F;
+                ppuaddr.raw = (ppuaddr.raw & 0xFFBE0) | (ppuaddr_t.raw & 0x041F);
             }
-            else if ( tick_ >= 280 && tick_ <= 304 ) {
-                //v: IHGF.ED CBA..... = t: IHGF.ED CBA.....
-                ppuaddr.raw |= ppuaddr_t.raw & 0x7BE0;
-            }
-#if 0
+#if 1
             // fetch sprites for the next scanline
             uint16_t baseAddr = ctrl_.bits.sprite_pattern ? 0x1000 : 0;
             int j = 0;
@@ -414,11 +410,9 @@ void PPU::frame()
         }
     }
     
-#if 1
     if ( (tick_ == 0) && (scanline_ == 240 ) ) {
         render();
     }
-#endif
 }
 
 void PPU::render()
@@ -550,7 +544,7 @@ void PPU::write( uint16_t addr, uint8_t val )
             //t: ....... ...HGFED = d: HGFED...
             //x:              CBA = d: .....CBA
             ppuaddr_t.bits.coarse_x = val >> 3;
-            ppuaddr_t.bits.fine_x = val & 7;
+            fine_x_ = val & 7;
         }
         write_low_addr_ ^= 1;
     }

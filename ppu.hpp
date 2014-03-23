@@ -186,32 +186,29 @@ public:
 private:
     Mask mask_;
 
-    // xx x yyy NN YY YYY XXXXX
-    // || | ||| || || ||| +++++-- coarse X scroll
-    // || | ||| || ++ +++-------- coarse Y scroll
-    // || | ||| ++--- ----------- nametable select
-    // || | +++------ ----------- fine Y scroll
-    // ++-+---------- ----------- fine X scroll
+    // yyy NN YY YYY XXXXX
+    // ||| || || ||| +++++-- coarse X scroll
+    // ||| || ++ +++-------- coarse Y scroll
+    // ||| ++--- ----------- nametable select
+    // +++------ ----------- fine Y scroll
 public:
     union Address
     {
         struct {
             // scroll
-            uint32_t coarse_x  : 5;
-            uint32_t coarse_y  : 5;
-            uint32_t nametable : 2;
-            uint32_t fine_y    : 3;
-            uint32_t fine_x    : 3;
+            uint16_t coarse_x  : 5;
+            uint16_t coarse_y  : 5;
+            uint16_t nametable : 2;
+            uint16_t fine_y    : 3;
         } bits;
-        uint32_t raw;
-        Address( uint32_t v = 0 ) : raw(v) {}
+        uint16_t raw;
+        Address( uint16_t v = 0 ) : raw(v) {}
 
         void print( std::ostream& ostr ) const {
             ostr << "(N:" << bits.nametable
                  << " X:" << bits.coarse_x
                  << " Y:" << bits.coarse_y
                  << " y:" << bits.fine_y
-                 << " x:" << bits.fine_x
                  << ")";
         }
     };
@@ -221,8 +218,12 @@ private:
     mutable Address ppuaddr;
     // temporary vram address
     mutable Address ppuaddr_t;
+    // fine X scroll
+    mutable uint8_t fine_x_;
     // toggle high/low address (shared by ppuaddr and ppuscroll)
     mutable int write_low_addr_;
+
+    mutable uint16_t bg_shift_l, bg_shift_h;
 
     CPU* cpu_;
 
