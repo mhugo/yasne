@@ -237,11 +237,21 @@ void PPU::frame()
         if ( ! mask_.bits.show_background ) {
             return;
         }
+
         // visible scanline
         if ( (tick_ >= 1) && (tick_ < 256) ) {
             int x = tick_;
             int y = scanline_;
             if ( (tick_-1) % 8 == 0 ) {
+                // increment x
+                if ( ppuaddr.bits.coarse_x < 31 ) {
+                    ppuaddr.bits.coarse_x ++;
+                }
+                else {
+                    ppuaddr.bits.coarse_x = 0;
+                    // switch nametable 2000 <-> 2400, 2800 <-> 2C00
+                    ppuaddr.bits.nametable ^= 1;
+                }
                 int x16 = ppuaddr.bits.coarse_x / 2;
                 int y16 = ppuaddr.bits.coarse_y / 2;
 
@@ -339,19 +349,6 @@ void PPU::frame()
             }
 #endif
             screen_[ y*256+x ] = p_color;
-
-            // increment x
-            if ( tick_ % 8 == 0 ) {
-                if ( ppuaddr.bits.coarse_x < 31 ) {
-                    ppuaddr.bits.coarse_x ++;
-                }
-                else {
-                    ppuaddr.bits.coarse_x = 0;
-                    // switch nametable 2000 <-> 2400, 2800 <-> 2C00
-                    ppuaddr.bits.nametable ^= 1;
-                }
-            }
-
         }
         else if ( tick_ < 321 ) {
             if ( tick_ == 256 ) {
