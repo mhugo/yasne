@@ -24,7 +24,7 @@ std::ostream& operator<<( std::ostream& ostr, const PPU::Controller& adr )
     adr.print(ostr);
     return ostr;
 }
-const char NesPalette[][3] = {
+const int NesPalette[][3] = {
     0x7C,0x7C,0x7C,
     0x00,0x00,0xFC,
     0x00,0x00,0xBC,
