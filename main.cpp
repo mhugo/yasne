@@ -14,6 +14,7 @@
 #include "ppu.hpp"
 #include "apu.hpp"
 #include "controller.hpp"
+#include "event_poller.hpp"
 
 #define MEM_SIZE 65536
 uint8_t* memory;
@@ -110,6 +111,8 @@ int main( int argc, char *argv[] )
     PPU ppu( &cpu );
     APU apu( &cpu, &controller );
 
+    EventPoller event_poller(controller);
+
     cpu.addOnBus( 0x0000, &ramDevice, 0x0000 );
     cpu.addOnBus( 0x0800, &ramDevice, 0x0800 );
     cpu.addOnBus( 0x1000, &ramDevice, 0x1000 );
@@ -126,6 +129,8 @@ int main( int argc, char *argv[] )
 
     cpu.reset();
 
+    event_poller.start(); // Start event polling thread
+
     bool stepMode = true;
 
     // compare to log file
@@ -140,48 +145,12 @@ int main( int argc, char *argv[] )
     bool breakMode = false;
     bool breakOnFrame = false;
     while ( true ) {
-
-        SDL_Event e;
-        SDL_PumpEvents();
-        if ( SDL_PollEvent(&e) ) {
-            if ( e.type == SDL_QUIT ) {
-                break;
-            }
-            else if ( e.type == SDL_KEYDOWN || e.type == SDL_KEYUP ) {
-                SDL_KeyboardEvent* ke = (SDL_KeyboardEvent*)(&e);
-                bool pressed = ke->state == SDL_PRESSED;
-                if ( ke->keysym.sym == SDLK_ESCAPE ) {
-                    break;
-                }
-                else if ( ke->keysym.sym == SDLK_RETURN ) {
-                    controller.setState( 0, Controller::StartButton, pressed );
-                }
-                else if ( ke->keysym.sym == SDLK_SPACE ) {
-                    controller.setState( 0, Controller::SelectButton, pressed );
-                }
-                else if ( ke->keysym.sym == SDLK_RIGHT ) {
-                    controller.setState( 0, Controller::RightButton, pressed );
-                }
-                else if ( ke->keysym.sym == SDLK_LEFT ) {
-                    controller.setState( 0, Controller::LeftButton, pressed );
-                }
-                else if ( ke->keysym.sym == SDLK_UP ) {
-                    controller.setState( 0, Controller::UpButton, pressed );
-                }
-                else if ( ke->keysym.sym == SDLK_DOWN ) {
-                    controller.setState( 0, Controller::DownButton, pressed );
-                }
-                else if ( ke->keysym.sym == SDLK_a ) {
-                    controller.setState( 0, Controller::AButton, pressed );
-                }
-                else if ( ke->keysym.sym == SDLK_b ) {
-                    controller.setState( 0, Controller::BButton, pressed );
-                }
-                else if ( ke->keysym.sym == SDLK_d && pressed ) {
-                    pause = true;
-                }
-            }
+        if (event_poller.should_quit()) {
+            break;
         }
+
+        // Old SDL_PollEvent block removed.
+        // The 'd' key for pause is no longer handled here.
 
         // expected processor state in testMode
         unsigned int addr, regA, regX, regY, regP, regSP, cyc;
@@ -396,6 +365,7 @@ int main( int argc, char *argv[] )
             ppu.tick();
         }
     }
+    event_poller.stop(); // Stop event poller before exiting
     std::cout << "End" << std::endl;
 
     return 0;

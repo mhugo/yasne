@@ -2,6 +2,7 @@
 #define NES_CONTROLLER_HPP
 
 #include <iostream>
+#include <mutex>
 
 ///
 /// Game controller
@@ -31,10 +32,12 @@ class Controller
 
     void setState( int controller, int button, bool pressed )
     {
+        std::lock_guard<std::mutex> lock(controller_mutex_);
         pressed_[ controller ][ button ] = pressed;
     }
 
     void setStrobe( bool state ) {
+        std::lock_guard<std::mutex> lock(controller_mutex_);
         strobe_ = state;
         if ( state ) {
             idx_[0] = 0;
@@ -43,6 +46,7 @@ class Controller
     }
 
     bool readPressed( int controller ) {
+        std::lock_guard<std::mutex> lock(controller_mutex_);
         if ( idx_[controller] == -1 ) {
             return true; // 1
         }
@@ -86,6 +90,8 @@ class Controller
     // which button is being read (for each controller)
     // -1 if none
     int idx_[2];
+
+    std::mutex controller_mutex_;
 };
 
 #endif
