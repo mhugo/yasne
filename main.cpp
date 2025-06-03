@@ -142,6 +142,7 @@ int main( int argc, char *argv[] )
     while ( true ) {
 
         SDL_Event e;
+        SDL_PumpEvents();
         if ( SDL_PollEvent(&e) ) {
             if ( e.type == SDL_QUIT ) {
                 break;
